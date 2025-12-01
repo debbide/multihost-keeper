@@ -1,0 +1,18 @@
+version: '3'
+services:
+  leme-bot:
+    image: ghcr.io/debbide/leme-bot:latest
+    container_name: leme-bot
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/config
+      - ./logs:/app/logs
+    environment:
+      - TZ=Asia/Shanghai
+      - CONFIG_FILE=/app/config/config.json
+      - AUTH_FILE=/app/config/auth.json
+      - LOG_FILE=/app/logs/lemehost.log
+      - STATE_FILE=/app/logs/state.json
+      - SECRET_KEY=change-this-to-random-string

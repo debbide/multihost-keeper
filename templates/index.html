@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LemeBot - 账号管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 暗色模式（默认） */
+        :root {
+            --bg-primary: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-dark-bg: rgba(0, 0, 0, 0.2);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.5);
+        }
+
+        /* 亮色模式 */
+        .light-mode {
+            --bg-primary: linear-gradient(135deg, #e8f4f8 0%, #d4e5f7 50%, #c1d4e8 100%);
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-dark-bg: rgba(255, 255, 255, 0.4);
+            --text-primary: #1a1a2e;
+            --text-secondary: rgba(26, 26, 46, 0.8);
+            --text-muted: rgba(26, 26, 46, 0.5);
+        }
+
+        body {
+            background: var(--bg-primary);
+            background-attachment: fixed;
+            transition: background 0.3s ease;
+        }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+        .glass-dark {
+            background: var(--glass-dark-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+        .glass-modal {
+            background: rgba(30, 30, 50, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+        .light-mode .glass-modal {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .glass-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .light-mode .glass-input {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            color: #1a1a2e;
+        }
+        .glass-input:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+        }
+        .light-mode .glass-input:focus {
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .glow-blue {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+        }
+        .glow-green {
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+        }
+
+        /* 文字颜色 */
+        .text-theme { color: var(--text-primary); }
+        .text-theme-secondary { color: var(--text-secondary); }
+        .text-theme-muted { color: var(--text-muted); }
+
+        .log-container::-webkit-scrollbar { width: 3px; }
+        .log-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 2px; }
+        .log-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+        .log-container::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+
+        /* 动画背景 */
+        .bg-animate {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .bg-animate::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(239, 68, 68, 0.08) 0%, transparent 40%);
+            animation: float 20s ease-in-out infinite;
+        }
+        .light-mode .bg-animate::before {
+            background: radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(239, 68, 68, 0.04) 0%, transparent 40%);
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(2%, 2%) rotate(1deg); }
+            50% { transform: translate(0, 4%) rotate(0deg); }
+            75% { transform: translate(-2%, 2%) rotate(-1deg); }
+        }
+
+        /* 主题切换按钮 */
+        .theme-toggle {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            border-radius: 13px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .theme-toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fbbf24;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+            transition: all 0.3s ease;
+        }
+        .light-mode .theme-toggle::after {
+            left: 26px;
+            background: #3b82f6;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="bg-animate"></div>
+{% raw %}
+    <div id="app">
+        <!-- Header -->
+        <header class="glass sticky top-0 z-40 shadow-lg">
+            <div class="max-w-full mx-auto px-4 py-3 flex items-center justify-between">
+                <h1 class="text-lg font-bold text-theme">LemeBot</h1>
+                <div class="flex items-center gap-3">
+                    <!-- 主题切换 -->
+                    <div class="theme-toggle" @click="toggleTheme" :title="isDark ? '切换到亮色模式' : '切换到暗色模式'"></div>
+                    <button
+                        @click="showAddModal = true"
+                        class="px-3 py-1.5 bg-green-500/80 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition glow-green"
+                    >
+                        + 添加
+                    </button>
+                    <button
+                        @click="showPasswordModal = true"
+                        class="px-3 py-1.5 glass hover:bg-white/10 text-theme text-sm font-medium rounded-lg transition"
+                    >
+                        改密
+                    </button>
+                    <button
+                        @click="logout"
+                        class="px-3 py-1.5 glass hover:bg-white/10 text-theme text-sm font-medium rounded-lg transition"
+                    >
+                        退出
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-full mx-auto px-4 py-4">
+            <!-- Loading -->
+            <div v-if="loading" class="text-center py-12">
+                <div class="text-theme-secondary">加载中...</div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-else-if="accounts.length === 0" class="text-center py-12">
+                <div class="glass-card rounded-xl p-6 max-w-sm mx-auto">
+                    <div class="text-theme-muted mb-3 text-sm">暂无账号</div>
+                    <button
+                        @click="showAddModal = true"
+                        class="px-4 py-1.5 bg-blue-500/80 hover:bg-blue-500 text-white text-sm rounded-lg transition glow-blue"
+                    >
+                        添加第一个账号
+                    </button>
+                </div>
+            </div>
+
+            <!-- Account Cards Grid -->
+            <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                <div
+                    v-for="account in accounts"
+                    :key="account.server_id"
+                    class="glass-card rounded-xl overflow-hidden hover:scale-[1.02] transition-transform duration-300"
+                >
+                    <!-- Card Header -->
+                    <div class="px-2.5 py-1.5 border-b border-white/10 flex items-center justify-between">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <span
+                                class="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                :class="account.enabled ? 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]' : 'bg-gray-500'"
+                            ></span>
+                            <h3 class="text-xs font-medium text-theme truncate">{{ account.name }}</h3>
+                        </div>
+                        <span class="text-[9px] text-theme-muted flex-shrink-0 ml-1">{{ account.server_id }}</span>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-2">
+                        <!-- Status Row -->
+                        <div class="flex gap-2 mb-1.5">
+                            <div class="flex-1 text-center py-1 glass-dark rounded">
+                                <span class="text-[9px] text-theme-muted">状态</span>
+                                <div class="text-[10px] font-medium" :class="account.enabled ? 'text-green-400' : 'text-gray-500'">
+                                    {{ account.enabled ? '启用' : '禁用' }}
+                                </div>
+                            </div>
+                            <div class="flex-1 text-center py-1 glass-dark rounded">
+                                <span class="text-[9px] text-theme-muted">结果</span>
+                                <div class="text-[10px] font-medium" :class="{'text-green-400': account.last_result === 'success', 'text-red-400': account.last_result === 'failed', 'text-gray-500': !account.last_result}">
+                                    {{ account.last_result === 'success' ? '成功' : account.last_result === 'failed' ? '失败' : '-' }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Remaining Time -->
+                        <div v-if="account.remaining_time" class="flex items-center justify-between mb-1.5 px-2 py-1 glass-dark rounded">
+                            <span class="text-[9px] text-theme-muted">剩余</span>
+                            <span class="text-[10px] font-mono font-medium text-blue-400">{{ account.remaining_time }}</span>
+                        </div>
+
+                        <!-- Uptime (已运行时间) -->
+                        <div v-if="account.start_time && account.last_result === 'success'" class="flex items-center justify-between mb-1.5 px-2 py-1 glass-dark rounded">
+                            <span class="text-[9px] text-theme-muted">已运行</span>
+                            <span class="text-[10px] font-mono font-medium text-green-400">{{ formatUptime(account.uptime_seconds) }}</span>
+                        </div>
+
+                        <!-- Countdown Timer -->
+                        <div class="mb-1.5 py-1.5 glass-dark rounded text-center">
+                            <span class="text-[9px] text-theme-muted">下次 ({{ account.min_interval }}-{{ account.max_interval }}m)</span>
+                            <div class="text-base font-mono font-bold" :class="account.countdown > 0 ? 'text-yellow-400' : 'text-gray-500'">
+                                {{ formatCountdown(account.countdown) }}
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="space-y-1 mb-1.5">
+                            <div class="flex gap-1">
+                                <button @click="toggleAccount(account)"
+                                    class="flex-1 py-1 text-white text-[10px] rounded transition"
+                                    :class="account.enabled ? 'bg-orange-500/80 hover:bg-orange-500' : 'bg-green-500/80 hover:bg-green-500'">
+                                    {{ account.enabled ? '停止' : '启动' }}
+                                </button>
+                                <button @click="renewAccount(account)" :disabled="account.renewing || !account.enabled"
+                                    class="flex-1 py-1 bg-blue-500/80 hover:bg-blue-500 disabled:bg-blue-500/40 text-white text-[10px] rounded transition">
+                                    {{ account.renewing ? '...' : '续期' }}
+                                </button>
+                            </div>
+                            <div class="flex gap-1">
+                                <button @click="editAccount(account)" class="flex-1 py-1 glass hover:bg-white/10 text-theme text-[10px] rounded transition">编辑</button>
+                                <button @click="deleteAccount(account)" class="flex-1 py-1 bg-red-500/50 hover:bg-red-500/70 text-white text-[10px] rounded transition">删除</button>
+                            </div>
+                        </div>
+
+                        <!-- Logs -->
+                        <div class="border-t border-white/10 pt-1.5">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[9px] text-theme-muted">日志</span>
+                                <button @click="refreshLogs(account)" class="text-[9px] text-blue-400 hover:text-blue-300">刷新</button>
+                            </div>
+                            <div class="log-container h-24 overflow-y-auto glass-dark rounded p-1.5">
+                                <div v-if="account.logs && account.logs.length > 0">
+                                    <div v-for="(log, idx) in account.logs" :key="idx"
+                                        class="text-xs text-theme-secondary mb-0.5 font-mono leading-normal truncate"
+                                        :class="{'text-green-400': log.includes('SUCCESS'), 'text-red-400': log.includes('ERROR'), 'text-yellow-400': log.includes('WARNING')}">
+                                        {{ formatLog(log) }}
+                                    </div>
+                                </div>
+                                <div v-else class="text-xs text-theme-muted text-center py-2">暂无</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Add/Edit Modal -->
+        <div v-if="showAddModal || showEditModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <div class="glass-modal rounded-2xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="px-6 py-4 border-b border-white/10">
+                    <h3 class="text-lg font-medium text-theme">
+                        {{ showEditModal ? '编辑账号' : '添加账号' }}
+                    </h3>
+                </div>
+
+                <form @submit.prevent="showEditModal ? submitEdit() : submitAdd()">
+                    <div class="p-6 space-y-4">
+                        <div>
+                            <label class="block text-sm text-theme-secondary mb-1">账号名称</label>
+                            <input
+                                v-model="formData.name"
+                                type="text"
+                                class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
+                                placeholder="例如：美国机房1"
+                                required
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-theme-secondary mb-1">Server ID</label>
+                            <input
+                                v-model="formData.server_id"
+                                type="text"
+                                class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
+                                placeholder="从 URL 中获取"
+                                required
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-theme-secondary mb-1">Cookie</label>
+                            <textarea
+                                v-model="formData.cookie"
+                                rows="3"
+                                class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none font-mono"
+                                placeholder="从浏览器开发者工具复制"
+                                :required="!showEditModal"
+                            ></textarea>
+                        </div>
+
+                        <!-- 时间区间设置 -->
+                        <div class="p-3 glass-dark rounded-lg">
+                            <label class="block text-sm text-theme-secondary mb-2">续期时间间隔（分钟）</label>
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1">
+                                    <label class="block text-xs text-theme-muted mb-1">最小</label>
+                                    <input
+                                        v-model.number="formData.min_interval"
+                                        type="number"
+                                        min="1"
+                                        class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
+                                    >
+                                </div>
+                                <span class="text-theme-muted pt-5">~</span>
+                                <div class="flex-1">
+                                    <label class="block text-xs text-theme-muted mb-1">最大</label>
+                                    <input
+                                        v-model.number="formData.max_interval"
+                                        type="number"
+                                        min="1"
+                                        class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
+                                    >
+                                </div>
+                            </div>
+                            <p class="text-xs text-theme-muted mt-2">每次续期后随机等待该区间内的时间</p>
+                        </div>
+
+                        <div v-if="showEditModal" class="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                v-model="formData.enabled"
+                                id="enabled"
+                                class="w-4 h-4 rounded bg-white/10 border-white/20"
+                            >
+                            <label for="enabled" class="text-sm text-theme-secondary">启用自动续期</label>
+                        </div>
+
+                        <div v-if="formError" class="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                            {{ formError }}
+                        </div>
+                    </div>
+
+                    <div class="px-6 py-4 border-t border-white/10 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            @click="closeModal"
+                            class="px-4 py-2 glass hover:bg-white/10 text-theme text-sm rounded-lg transition"
+                        >
+                            取消
+                        </button>
+                        <button
+                            type="submit"
+                            :disabled="formLoading"
+                            class="px-4 py-2 bg-blue-500/80 hover:bg-blue-500 disabled:bg-blue-500/40 text-white text-sm rounded-lg transition"
+                        >
+                            {{ formLoading ? '保存中...' : '保存' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Password Change Modal -->
+        <div v-if="showPasswordModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <div class="glass-modal rounded-2xl w-full max-w-sm mx-4">
+                <div class="px-6 py-4 border-b border-white/10">
+                    <h3 class="text-lg font-medium text-theme">修改密码</h3>
+                </div>
+
+                <form @submit.prevent="submitPasswordChange">
+                    <div class="p-6 space-y-4">
+                        <div>
+                            <label class="block text-sm text-theme-secondary mb-1">旧密码</label>
+                            <input
+                                v-model="passwordData.old_password"
+                                type="password"
+                                class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
+                                placeholder="请输入当前密码"
+                                required
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-theme-secondary mb-1">新密码</label>
+                            <input
+                                v-model="passwordData.new_password"
+                                type="password"
+                                class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
+                                placeholder="至少6位"
+                                required
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-theme-secondary mb-1">确认新密码</label>
+                            <input
+                                v-model="passwordData.confirm_password"
+                                type="password"
+                                class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
+                                placeholder="再次输入新密码"
+                                required
+                            >
+                        </div>
+
+                        <div v-if="passwordError" class="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                            {{ passwordError }}
+                        </div>
+                    </div>
+
+                    <div class="px-6 py-4 border-t border-white/10 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            @click="closePasswordModal"
+                            class="px-4 py-2 glass hover:bg-white/10 text-theme text-sm rounded-lg transition"
+                        >
+                            取消
+                        </button>
+                        <button
+                            type="submit"
+                            :disabled="passwordLoading"
+                            class="px-4 py-2 bg-blue-500/80 hover:bg-blue-500 disabled:bg-blue-500/40 text-white text-sm rounded-lg transition"
+                        >
+                            {{ passwordLoading ? '保存中...' : '保存' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div
+            v-if="toast.show"
+            class="fixed bottom-4 right-4 px-4 py-3 rounded-xl shadow-lg text-white text-sm transition-all backdrop-blur-md"
+            :class="toast.type === 'success' ? 'bg-green-500/80' : 'bg-red-500/80'"
+        >
+            {{ toast.message }}
+        </div>
+    </div>
+{% endraw %}
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script>
+        const { createApp, ref, reactive, onMounted, onUnmounted } = Vue
+
+        createApp({
+            setup() {
+                const loading = ref(true)
+                const accounts = ref([])
+                const showAddModal = ref(false)
+                const showEditModal = ref(false)
+                const showPasswordModal = ref(false)
+                const formLoading = ref(false)
+                const formError = ref('')
+                const formData = reactive({
+                    name: '',
+                    server_id: '',
+                    original_server_id: '',
+                    cookie: '',
+                    enabled: true,
+                    min_interval: 15,
+                    max_interval: 25
+                })
+                const passwordLoading = ref(false)
+                const passwordError = ref('')
+                const passwordData = reactive({
+                    old_password: '',
+                    new_password: '',
+                    confirm_password: ''
+                })
+                const toast = reactive({ show: false, message: '', type: 'success' })
+
+                // 主题切换
+                const isDark = ref(true)
+                const toggleTheme = () => {
+                    isDark.value = !isDark.value
+                    if (isDark.value) {
+                        document.body.classList.remove('light-mode')
+                    } else {
+                        document.body.classList.add('light-mode')
+                    }
+                    localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
+                }
+                // 初始化主题
+                const savedTheme = localStorage.getItem('theme')
+                if (savedTheme === 'light') {
+                    isDark.value = false
+                    document.body.classList.add('light-mode')
+                }
+
+                let countdownTimer = null
+
+                const showToast = (message, type = 'success') => {
+                    toast.message = message
+                    toast.type = type
+                    toast.show = true
+                    setTimeout(() => { toast.show = false }, 3000)
+                }
+
+                const formatCountdown = (seconds) => {
+                    if (!seconds || seconds <= 0) return '--:--'
+                    const mins = Math.floor(seconds / 60)
+                    const secs = seconds % 60
+                    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+                }
+
+                const formatUptime = (seconds) => {
+                    if (!seconds || seconds <= 0) return '--:--:--'
+                    const hours = Math.floor(seconds / 3600)
+                    const mins = Math.floor((seconds % 3600) / 60)
+                    const secs = seconds % 60
+                    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+                }
+
+                const updateCountdowns = () => {
+                    const now = new Date()
+                    accounts.value.forEach(acc => {
+                        // 更新下次运行倒计时
+                        if (acc.next_run) {
+                            const nextRun = new Date(acc.next_run)
+                            const diff = Math.floor((nextRun - now) / 1000)
+                            acc.countdown = diff > 0 ? diff : 0
+                        } else {
+                            acc.countdown = 0
+                        }
+                        // 更新已运行时间（从首次成功时间开始累积）
+                        if (acc.start_time && acc.last_result === 'success') {
+                            const startTime = new Date(acc.start_time)
+                            acc.uptime_seconds = Math.floor((now - startTime) / 1000)
+                        } else {
+                            acc.uptime_seconds = 0
+                        }
+                    })
+                }
+
+                const fetchAccounts = async () => {
+                    try {
+                        const res = await fetch('/api/accounts')
+                        if (res.status === 401) {
+                            window.location.href = '/login'
+                            return
+                        }
+                        const data = await res.json()
+                        // 保留现有的 logs 和 renewing 状态
+                        data.forEach(acc => {
+                            const existing = accounts.value.find(a => a.server_id === acc.server_id)
+                            acc.logs = existing?.logs || []
+                            acc.renewing = existing?.renewing || false
+                            acc.countdown = 0
+                        })
+                        accounts.value = data
+                        updateCountdowns()
+                        // 加载日志
+                        accounts.value.forEach(acc => {
+                            if (acc.logs.length === 0) {
+                                refreshLogs(acc)
+                            }
+                        })
+                    } catch (e) {
+                        showToast('加载账号失败', 'error')
+                    } finally {
+                        loading.value = false
+                    }
+                }
+
+                const refreshLogs = async (account) => {
+                    try {
+                        const res = await fetch(`/api/accounts/${account.server_id}/logs?limit=5`)
+                        const logs = await res.json()
+                        account.logs = logs
+                    } catch (e) {
+                        console.error('加载日志失败', e)
+                    }
+                }
+
+                const formatLog = (log) => {
+                    const match = log.match(/\[[\d-]+ ([\d:]+)\] \[(\w+)\] \[sid:\d+\] (.+)/)
+                    if (match) {
+                        return `${match[1]} ${match[3]}`
+                    }
+                    return log
+                }
+
+                const renewAccount = async (account) => {
+                    account.renewing = true
+                    try {
+                        const res = await fetch(`/api/accounts/${account.server_id}/renew`, {
+                            method: 'POST'
+                        })
+                        const data = await res.json()
+                        if (data.success) {
+                            showToast(data.message, 'success')
+                            if (data.remaining_time) {
+                                account.remaining_time = data.remaining_time
+                            }
+                            account.last_result = 'success'
+                        } else {
+                            showToast(data.message || '续期失败', 'error')
+                            account.last_result = 'failed'
+                        }
+                        refreshLogs(account)
+                    } catch (e) {
+                        console.error('续期请求失败:', e)
+                        showToast('网络错误: ' + e.message, 'error')
+                    } finally {
+                        account.renewing = false
+                    }
+                }
+
+                const editAccount = (account) => {
+                    formData.name = account.name
+                    formData.server_id = account.server_id
+                    formData.original_server_id = account.server_id
+                    formData.cookie = account.cookie || ''
+                    formData.enabled = account.enabled
+                    formData.min_interval = account.min_interval || 15
+                    formData.max_interval = account.max_interval || 25
+                    formError.value = ''
+                    showEditModal.value = true
+                }
+
+                const toggleAccount = async (account) => {
+                    try {
+                        const res = await fetch(`/api/accounts/${account.server_id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: account.name,
+                                enabled: !account.enabled
+                            })
+                        })
+                        const data = await res.json()
+                        if (data.success) {
+                            account.enabled = !account.enabled
+                            showToast(account.enabled ? '已启动' : '已停止', 'success')
+                        } else {
+                            showToast(data.error || '操作失败', 'error')
+                        }
+                    } catch (e) {
+                        showToast('网络错误', 'error')
+                    }
+                }
+
+                const deleteAccount = async (account) => {
+                    if (!confirm(`确定要删除账号 "${account.name}" 吗？`)) return
+
+                    try {
+                        const res = await fetch(`/api/accounts/${account.server_id}`, {
+                            method: 'DELETE'
+                        })
+                        const data = await res.json()
+                        if (data.success) {
+                            showToast('删除成功', 'success')
+                            fetchAccounts()
+                        } else {
+                            showToast(data.error || '删除失败', 'error')
+                        }
+                    } catch (e) {
+                        showToast('网络错误', 'error')
+                    }
+                }
+
+                const closeModal = () => {
+                    showAddModal.value = false
+                    showEditModal.value = false
+                    formData.name = ''
+                    formData.server_id = ''
+                    formData.original_server_id = ''
+                    formData.cookie = ''
+                    formData.enabled = true
+                    formData.min_interval = 15
+                    formData.max_interval = 25
+                    formError.value = ''
+                }
+
+                const submitAdd = async () => {
+                    formError.value = ''
+
+                    if (formData.min_interval > formData.max_interval) {
+                        formError.value = '最小间隔不能大于最大间隔'
+                        return
+                    }
+
+                    formLoading.value = true
+
+                    try {
+                        const res = await fetch('/api/accounts', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                name: formData.name,
+                                server_id: formData.server_id,
+                                cookie: formData.cookie,
+                                min_interval: formData.min_interval,
+                                max_interval: formData.max_interval
+                            })
+                        })
+                        const data = await res.json()
+
+                        if (data.success) {
+                            showToast('添加成功', 'success')
+                            closeModal()
+                            fetchAccounts()
+                        } else {
+                            formError.value = data.error || '添加失败'
+                        }
+                    } catch (e) {
+                        formError.value = '网络错误'
+                    } finally {
+                        formLoading.value = false
+                    }
+                }
+
+                const submitEdit = async () => {
+                    formError.value = ''
+
+                    if (formData.min_interval > formData.max_interval) {
+                        formError.value = '最小间隔不能大于最大间隔'
+                        return
+                    }
+
+                    formLoading.value = true
+
+                    try {
+                        const payload = {
+                            name: formData.name,
+                            server_id: formData.server_id,
+                            enabled: formData.enabled,
+                            min_interval: formData.min_interval,
+                            max_interval: formData.max_interval
+                        }
+                        if (formData.cookie.trim()) {
+                            payload.cookie = formData.cookie
+                        }
+
+                        const res = await fetch(`/api/accounts/${formData.original_server_id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        })
+                        const data = await res.json()
+
+                        if (data.success) {
+                            showToast('保存成功', 'success')
+                            closeModal()
+                            fetchAccounts()
+                        } else {
+                            formError.value = data.error || '保存失败'
+                        }
+                    } catch (e) {
+                        formError.value = '网络错误'
+                    } finally {
+                        formLoading.value = false
+                    }
+                }
+
+                const closePasswordModal = () => {
+                    showPasswordModal.value = false
+                    passwordData.old_password = ''
+                    passwordData.new_password = ''
+                    passwordData.confirm_password = ''
+                    passwordError.value = ''
+                }
+
+                const submitPasswordChange = async () => {
+                    passwordError.value = ''
+
+                    if (passwordData.new_password !== passwordData.confirm_password) {
+                        passwordError.value = '两次输入的新密码不一致'
+                        return
+                    }
+
+                    if (passwordData.new_password.length < 6) {
+                        passwordError.value = '新密码长度至少6位'
+                        return
+                    }
+
+                    passwordLoading.value = true
+
+                    try {
+                        const res = await fetch('/api/change-password', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                old_password: passwordData.old_password,
+                                new_password: passwordData.new_password,
+                                confirm_password: passwordData.confirm_password
+                            })
+                        })
+                        const data = await res.json()
+
+                        if (data.success) {
+                            showToast('密码修改成功', 'success')
+                            closePasswordModal()
+                        } else {
+                            passwordError.value = data.error || '修改失败'
+                        }
+                    } catch (e) {
+                        passwordError.value = '网络错误'
+                    } finally {
+                        passwordLoading.value = false
+                    }
+                }
+
+                const logout = async () => {
+                    await fetch('/api/logout', { method: 'POST' })
+                    window.location.href = '/login'
+                }
+
+                onMounted(() => {
+                    fetchAccounts()
+                    // 每秒更新倒计时
+                    countdownTimer = setInterval(updateCountdowns, 1000)
+                    // 每 30 秒刷新账号数据
+                    setInterval(fetchAccounts, 30000)
+                })
+
+                onUnmounted(() => {
+                    if (countdownTimer) {
+                        clearInterval(countdownTimer)
+                    }
+                })
+
+                return {
+                    loading,
+                    accounts,
+                    showAddModal,
+                    showEditModal,
+                    showPasswordModal,
+                    formLoading,
+                    formError,
+                    formData,
+                    passwordLoading,
+                    passwordError,
+                    passwordData,
+                    toast,
+                    isDark,
+                    toggleTheme,
+                    formatLog,
+                    formatCountdown,
+                    formatUptime,
+                    refreshLogs,
+                    renewAccount,
+                    editAccount,
+                    toggleAccount,
+                    deleteAccount,
+                    closeModal,
+                    closePasswordModal,
+                    submitAdd,
+                    submitEdit,
+                    submitPasswordChange,
+                    logout
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

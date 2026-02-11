@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 复制应用文件
 COPY main.py .
 COPY app.py .
+COPY platforms/ platforms/
 COPY templates/ templates/
 
 # 创建日志和配置目录挂载点

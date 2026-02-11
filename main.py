@@ -12,6 +12,10 @@ from datetime import datetime, timedelta
 import threading
 import urllib3
 import importlib
+import io
+
+# 强制设置输出编码为 UTF-8
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -31,7 +35,6 @@ def get_platform_module(server_id):
     """
     根据 server_id 识别并加载对应的平台模块
     """
-    # 识别逻辑：UUID 格式认为是 freexcraft
     if re.match(r'^[0-9a-fA-F-]{36}$', str(server_id)):
         pkg = "platforms.freexcraft"
         domain = "freexcraft.com"
@@ -89,11 +92,22 @@ def save_state():
     except Exception: pass
 
 def log(message, level="INFO", server_id=None):
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    log_line = f"[{timestamp}] [{level}]"
-    if server_id: log_line += f" [sid:{server_id}]"
-    log_line += f" {message}"
-    print(log_line)
+    """
+    自愈式日志格式：适配用户审美 [HH:MM:SS] 消息
+    文件的末尾附加 [sid:xxx] 用于 Web 端过滤
+    """
+    now = datetime.now()
+    time_str = now.strftime('%H:%M:%S')
+    
+    # 纯净显示格式 (用于 print 和用户阅读)
+    display_line = f"{time_str} {message}"
+    
+    # 持久化格式 (包含 sid 以供后端过滤)
+    log_line = display_line
+    if server_id:
+        log_line += f" [sid:{server_id}]"
+    
+    print(display_line)
     sys.stdout.flush()
     try:
         log_dir = os.path.dirname(LOG_FILE)
@@ -111,11 +125,26 @@ def get_account_logs(server_id, limit=5):
         pattern = f"[sid:{server_id}]"
         for line in reversed(lines):
             if pattern in line:
-                logs.append(line.strip())
+                # 返回时不带 sid 后缀，保持界面整洁
+                clean_line = line.replace(pattern, "").strip()
+                logs.append(clean_line)
                 if len(logs) >= limit: break
         logs.reverse()
     except Exception: pass
     return logs
+
+def get_all_states():
+    with state_lock:
+        result = {}
+        for sid, state in account_states.items():
+            result[sid] = {
+                'next_run': state.get('next_run').isoformat() if state.get('next_run') else None,
+                'last_run': state.get('last_run').isoformat() if state.get('last_run') else None,
+                'start_time': state.get('start_time').isoformat() if state.get('start_time') else None,
+                'last_result': state.get('last_result'),
+                'remaining_time': state.get('remaining_time')
+            }
+        return result
 
 def update_account_state(server_id, **kwargs):
     with state_lock:
@@ -141,7 +170,7 @@ def process_account(account):
     module, domain = get_platform_module(server_id)
     if not module: return False, "平台模块加载失败", None
 
-    log(f"开始处理: [{name}] (模块: {module.__name__})", "INFO", server_id)
+    log(f"开始处理账号: [{name}]", "INFO", server_id)
 
     session = requests.Session()
     adapter = HTTPAdapter(max_retries=Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504]))
@@ -157,7 +186,8 @@ def process_account(account):
         return False, f"Cookie 解析失败: {e}", None
 
     try:
-        return module.process(session, account)
+        # 将 log 函数注入模块
+        return module.process(session, account, log)
     except Exception as e:
         return False, f"调用模块出错: {e}", None
 
@@ -180,7 +210,7 @@ def account_worker(account):
 
         next_run, interval = schedule_next_run(acc)
         update_account_state(server_id, next_run=next_run)
-        log(f"下次运行: {next_run.strftime('%H:%M:%S')} (间隔 {interval}m)", "INFO", server_id)
+        log(f"下次运行: {next_run.strftime('%H:%M:%S')} (间隔 {interval} 分钟)", "INFO", server_id)
 
         while datetime.now() < next_run:
             time.sleep(10)
@@ -201,7 +231,9 @@ def start_account_worker(account):
     return True
 
 def background_task():
-    log("="*30); log("模块化续期服务已启动"); log("="*30)
+    log("="*30)
+    log("模块化续期服务已启动")
+    log("="*30)
     load_state()
     known = set()
     while True:

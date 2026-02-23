@@ -23,14 +23,19 @@ RUN env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u no_proxy -u
 # 安装 sing-box
 ARG SING_BOX_VERSION=1.10.2
 RUN apt-get update && apt-get install -y curl unzip ca-certificates && rm -rf /var/lib/apt/lists/* \
+    && arch="$(uname -m)" \
+    && if [ "$arch" = "x86_64" ]; then target="amd64"; \
+       elif [ "$arch" = "aarch64" ] || [ "$arch" = "arm64" ]; then target="arm64"; \
+       elif [ "$arch" = "armv7l" ]; then target="armv7"; \
+       else echo "Unsupported arch: $arch"; exit 1; fi \
     && (curl -fL --retry 3 --retry-delay 2 \
-    "https://ghfast.top/https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" \
-    -o /tmp/sing-box.tar.gz \
-    || curl -fL --retry 3 --retry-delay 2 \
-    "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" \
-    -o /tmp/sing-box.tar.gz) \
+        "https://ghfast.top/https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-${target}.tar.gz" \
+        -o /tmp/sing-box.tar.gz \
+        || curl -fL --retry 3 --retry-delay 2 \
+        "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-${target}.tar.gz" \
+        -o /tmp/sing-box.tar.gz) \
     && tar -xzf /tmp/sing-box.tar.gz -C /tmp \
-    && mv "/tmp/sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box" /usr/local/bin/sing-box \
+    && mv "/tmp/sing-box-${SING_BOX_VERSION}-linux-${target}/sing-box" /usr/local/bin/sing-box \
     && chmod +x /usr/local/bin/sing-box \
     && rm -rf /tmp/sing-box*
 COPY package.json .

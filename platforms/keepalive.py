@@ -11,9 +11,8 @@ def process(session, account, log):
     heartbeat_url = account.get("keepalive_heartbeat_url", "").strip()
     check_url = account.get("keepalive_check_url", "").strip()
     
-    # 提取用户配在 Cookie 栏里的身份凭证（支持 Raw Cookie 或 Bearer Token）
+    # 解析凭证：智能识别 Token 和 Cookie
     credential = account.get("cookie", "").strip()
-    # 增强型浏览器伪装 Headers
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         "Accept": "application/json, text/plain, */*",
@@ -23,24 +22,23 @@ def process(session, account, log):
         "Sec-CH-UA-Platform": '"Windows"',
         "Sec-Fetch-Dest": "empty",
         "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
+        "Sec-Fetch-Site": "same-site",
         "Connection": "keep-alive"
     }
     
     if credential:
         if credential.startswith("Bearer "):
             headers["Authorization"] = credential
+        elif "=" in credential:
+            headers["Cookie"] = credential
+        elif len(credential.split("-")) >= 4:
+            headers["Authorization"] = f"Bearer {credential}"
         else:
-            # 兼容 UUID 格式的 Token（常见于 KeepAlive/Altare 项目）
-            if len(credential.split("-")) >= 4 and " " not in credential and "=" not in credential:
-                headers["Authorization"] = f"Bearer {credential}"
-            else:
-                headers["Cookie"] = credential
+            headers["Cookie"] = credential
 
     if heartbeat_url and "altare.sh" in heartbeat_url:
         headers["Origin"] = "https://altare.sh"
         headers["Referer"] = "https://altare.sh/billing/rewards/afk"
-        headers["Sec-Fetch-Site"] = "cross-site"
 
     try:
         wait_seconds = int(wait_seconds)

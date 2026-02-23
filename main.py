@@ -20,10 +20,11 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # ==================== 配置 ====================
-CONFIG_FILE = os.environ.get("CONFIG_FILE", "/app/config/config.json")
-LOG_FILE = os.environ.get("LOG_FILE", "/app/logs/lemehost.log")
-STATE_FILE = os.environ.get("STATE_FILE", "/app/logs/state.json")
-PROXY_NODES_FILE = os.environ.get("PROXY_NODES_FILE", "/app/config/proxy_nodes.json")
+DATA_DIR = os.environ.get("DATA_DIR", "/app/data")
+CONFIG_FILE = os.environ.get("CONFIG_FILE", os.path.join(DATA_DIR, "config.json"))
+LOG_FILE = os.environ.get("LOG_FILE", os.path.join(DATA_DIR, "lemehost.log"))
+STATE_FILE = os.environ.get("STATE_FILE", os.path.join(DATA_DIR, "state.json"))
+PROXY_NODES_FILE = os.environ.get("PROXY_NODES_FILE", os.path.join(DATA_DIR, "proxy_nodes.json"))
 PROXY_BASE_PORT = 20000
 
 DEFAULT_MIN_INTERVAL = 15

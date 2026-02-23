@@ -22,16 +22,17 @@ from main import (
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 
-AUTH_FILE = os.environ.get("AUTH_FILE", "/app/config/auth.json")
-PROXY_NODES_FILE = os.environ.get("PROXY_NODES_FILE", "/app/config/proxy_nodes.json")
+DATA_DIR = os.environ.get("DATA_DIR", "/app/data")
+AUTH_FILE = os.environ.get("AUTH_FILE", os.path.join(DATA_DIR, "auth.json"))
+PROXY_NODES_FILE = os.environ.get("PROXY_NODES_FILE", os.path.join(DATA_DIR, "proxy_nodes.json"))
 PROXY_RUNTIME_CONFIG_FILE = os.environ.get(
-    "PROXY_RUNTIME_CONFIG_FILE", "/app/config/singbox_config.json"
+    "PROXY_RUNTIME_CONFIG_FILE", os.path.join(DATA_DIR, "singbox_config.json")
 )
 PROXY_BASE_PORT = 20000
 
 proxy_process = None
 proxy_lock = threading.Lock()
-PROXY_LOG_FILE = os.environ.get("PROXY_LOG_FILE", "/app/logs/singbox.log")
+PROXY_LOG_FILE = os.environ.get("PROXY_LOG_FILE", os.path.join(DATA_DIR, "singbox.log"))
 
 
 # ==================== 认证相关 ====================

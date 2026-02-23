@@ -6,6 +6,10 @@ WORKDIR /app
 
 # 设置时区为上海 (可选，方便看日志)
 ENV TZ=Asia/Shanghai
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
+    sed -i 's|security.debian.org|archive.debian.org/debian-security|g' /etc/apt/sources.list && \
+    sed -i '/stretch-updates/d' /etc/apt/sources.list || true
+RUN apt-get update || true
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # 复制依赖并安装
@@ -20,11 +24,11 @@ RUN env -u http_proxy -u https_proxy -u HTTP_PROXY -u HTTPS_PROXY -u no_proxy -u
 ARG SING_BOX_VERSION=1.10.2
 RUN apt-get update && apt-get install -y curl unzip ca-certificates && rm -rf /var/lib/apt/lists/* \
     && (curl -fL --retry 3 --retry-delay 2 \
-        "https://ghfast.top/https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" \
-        -o /tmp/sing-box.tar.gz \
-        || curl -fL --retry 3 --retry-delay 2 \
-        "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" \
-        -o /tmp/sing-box.tar.gz) \
+    "https://ghfast.top/https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" \
+    -o /tmp/sing-box.tar.gz \
+    || curl -fL --retry 3 --retry-delay 2 \
+    "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" \
+    -o /tmp/sing-box.tar.gz) \
     && tar -xzf /tmp/sing-box.tar.gz -C /tmp \
     && mv "/tmp/sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box" /usr/local/bin/sing-box \
     && chmod +x /usr/local/bin/sing-box \
@@ -42,8 +46,8 @@ COPY anik_renew.py .
 COPY leme_power.py .
 COPY freexcraft_renew.py .
 
-# 创建日志和配置目录挂载点
-VOLUME ["/app/config", "/app/logs"]
+# 创建数据目录挂载点
+VOLUME ["/app/data"]
 
 # 暴露 Web 端口
 EXPOSE 5000

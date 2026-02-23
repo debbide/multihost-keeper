@@ -68,7 +68,12 @@ def process(session, account, log):
                 resp = session.get(check_url, headers=headers, timeout=15)
                 try:
                     data = resp.json()
-                    log(f"✅ 查询成功 ({resp.status_code}): {str(data)[:150]}", "INFO", server_id)
+                    # 尝试专门针对 altare 等返回 balanceCents 的结构提取金额
+                    if "balanceCents" in data:
+                        balance = data["balanceCents"] / 100.0
+                        log(f"✅ 查询成功: 当前积分/余额为 {balance}", "INFO", server_id)
+                    else:
+                        log(f"✅ 查询成功 ({resp.status_code}): {str(data)[:150]}", "INFO", server_id)
                 except:
                     log(f"✅ 查询成功 ({resp.status_code})", "INFO", server_id)
             except Exception as e:

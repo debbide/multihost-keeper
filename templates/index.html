@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -33,6 +34,7 @@
             background-attachment: fixed;
             transition: background 0.3s ease;
         }
+
         .glass {
             background: var(--glass-bg);
             backdrop-filter: blur(12px);
@@ -40,6 +42,7 @@
             border: 1px solid var(--glass-border);
             transition: all 0.3s ease;
         }
+
         .glass-dark {
             background: var(--glass-dark-bg);
             backdrop-filter: blur(12px);
@@ -47,6 +50,7 @@
             border: 1px solid var(--glass-border);
             transition: all 0.3s ease;
         }
+
         .glass-card {
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
@@ -55,6 +59,7 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             transition: all 0.3s ease;
         }
+
         .glass-modal {
             background: rgba(30, 30, 50, 0.85);
             backdrop-filter: blur(20px);
@@ -62,44 +67,80 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
         }
+
         .light-mode .glass-modal {
             background: rgba(255, 255, 255, 0.9);
             border: 1px solid rgba(0, 0, 0, 0.1);
         }
+
         .glass-input {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
         }
+
         .light-mode .glass-input {
             background: rgba(255, 255, 255, 0.5);
             border: 1px solid rgba(0, 0, 0, 0.1);
             color: #1a1a2e;
         }
+
         .glass-input:focus {
             background: rgba(255, 255, 255, 0.08);
             border-color: rgba(59, 130, 246, 0.5);
             box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
         }
+
         .light-mode .glass-input:focus {
             background: rgba(255, 255, 255, 0.7);
         }
+        select.glass-input option {
+            background: #1f2433;
+            color: #e5e7eb;
+        }
+        .light-mode select.glass-input option {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
         .glow-blue {
             box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
         }
+
         .glow-green {
             box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
         }
 
         /* 文字颜色 */
-        .text-theme { color: var(--text-primary); }
-        .text-theme-secondary { color: var(--text-secondary); }
-        .text-theme-muted { color: var(--text-muted); }
+        .text-theme {
+            color: var(--text-primary);
+        }
 
-        .log-container::-webkit-scrollbar { width: 3px; }
-        .log-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 2px; }
-        .log-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
-        .log-container::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+        .text-theme-secondary {
+            color: var(--text-secondary);
+        }
+
+        .text-theme-muted {
+            color: var(--text-muted);
+        }
+
+        .log-container::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        .log-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+        }
+
+        .log-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+
+        .log-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
 
         /* 动画背景 */
         .bg-animate {
@@ -111,6 +152,7 @@
             z-index: -1;
             overflow: hidden;
         }
+
         .bg-animate::before {
             content: '';
             position: absolute;
@@ -119,20 +161,35 @@
             width: 200%;
             height: 200%;
             background: radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 40%, rgba(239, 68, 68, 0.08) 0%, transparent 40%);
+                radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(239, 68, 68, 0.08) 0%, transparent 40%);
             animation: float 20s ease-in-out infinite;
         }
+
         .light-mode .bg-animate::before {
             background: radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.06) 0%, transparent 50%),
-                        radial-gradient(circle at 40% 40%, rgba(239, 68, 68, 0.04) 0%, transparent 40%);
+                radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(239, 68, 68, 0.04) 0%, transparent 40%);
         }
+
         @keyframes float {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(2%, 2%) rotate(1deg); }
-            50% { transform: translate(0, 4%) rotate(0deg); }
-            75% { transform: translate(-2%, 2%) rotate(-1deg); }
+
+            0%,
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            25% {
+                transform: translate(2%, 2%) rotate(1deg);
+            }
+
+            50% {
+                transform: translate(0, 4%) rotate(0deg);
+            }
+
+            75% {
+                transform: translate(-2%, 2%) rotate(-1deg);
+            }
         }
 
         /* 主题切换按钮 */
@@ -141,11 +198,12 @@
             width: 50px;
             height: 26px;
             border-radius: 13px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             cursor: pointer;
             transition: all 0.3s ease;
         }
+
         .theme-toggle::after {
             content: '';
             position: absolute;
@@ -158,6 +216,7 @@
             box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
             transition: all 0.3s ease;
         }
+
         .light-mode .theme-toggle::after {
             left: 26px;
             background: #3b82f6;
@@ -165,9 +224,10 @@
         }
     </style>
 </head>
+
 <body class="min-h-screen">
     <div class="bg-animate"></div>
-{% raw %}
+    {% raw %}
     <div id="app">
         <!-- Header -->
         <header class="glass sticky top-0 z-40 shadow-lg">
@@ -176,22 +236,20 @@
                 <div class="flex items-center gap-3">
                     <!-- 主题切换 -->
                     <div class="theme-toggle" @click="toggleTheme" :title="isDark ? '切换到亮色模式' : '切换到暗色模式'"></div>
-                    <button
-                        @click="showAddModal = true"
-                        class="px-3 py-1.5 bg-green-500/80 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition glow-green"
-                    >
+                    <button @click="showProxyModal = true"
+                        class="px-3 py-1.5 glass hover:bg-white/10 text-theme text-sm font-medium rounded-lg transition">
+                        代理设置
+                    </button>
+                    <button @click="showAddModal = true"
+                        class="px-3 py-1.5 bg-green-500/80 hover:bg-green-500 text-white text-sm font-medium rounded-lg transition glow-green">
                         + 添加
                     </button>
-                    <button
-                        @click="showPasswordModal = true"
-                        class="px-3 py-1.5 glass hover:bg-white/10 text-theme text-sm font-medium rounded-lg transition"
-                    >
+                    <button @click="showPasswordModal = true"
+                        class="px-3 py-1.5 glass hover:bg-white/10 text-theme text-sm font-medium rounded-lg transition">
                         改密
                     </button>
-                    <button
-                        @click="logout"
-                        class="px-3 py-1.5 glass hover:bg-white/10 text-theme text-sm font-medium rounded-lg transition"
-                    >
+                    <button @click="logout"
+                        class="px-3 py-1.5 glass hover:bg-white/10 text-theme text-sm font-medium rounded-lg transition">
                         退出
                     </button>
                 </div>
@@ -209,10 +267,8 @@
             <div v-else-if="accounts.length === 0" class="text-center py-12">
                 <div class="glass-card rounded-xl p-6 max-w-sm mx-auto">
                     <div class="text-theme-muted mb-3 text-sm">暂无账号</div>
-                    <button
-                        @click="showAddModal = true"
-                        class="px-4 py-1.5 bg-blue-500/80 hover:bg-blue-500 text-white text-sm rounded-lg transition glow-blue"
-                    >
+                    <button @click="showAddModal = true"
+                        class="px-4 py-1.5 bg-blue-500/80 hover:bg-blue-500 text-white text-sm rounded-lg transition glow-blue">
                         添加第一个账号
                     </button>
                 </div>
@@ -220,18 +276,13 @@
 
             <!-- Account Cards Grid -->
             <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                <div
-                    v-for="account in accounts"
-                    :key="account.server_id"
-                    class="glass-card rounded-xl overflow-hidden hover:scale-[1.02] transition-transform duration-300"
-                >
+                <div v-for="account in accounts" :key="account.server_id"
+                    class="glass-card rounded-xl overflow-hidden hover:scale-[1.02] transition-transform duration-300">
                     <!-- Card Header -->
                     <div class="px-2.5 py-1.5 border-b border-white/10 flex items-center justify-between">
                         <div class="flex items-center gap-1.5 min-w-0">
-                            <span
-                                class="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                                :class="account.enabled ? 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]' : 'bg-gray-500'"
-                            ></span>
+                            <span class="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                :class="account.enabled ? 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]' : 'bg-gray-500'"></span>
                             <h3 class="text-xs font-medium text-theme truncate">{{ account.name }}</h3>
                         </div>
                         <span class="text-[9px] text-theme-muted flex-shrink-0 ml-1">{{ account.server_id }}</span>
@@ -243,34 +294,43 @@
                         <div class="flex gap-2 mb-1.5">
                             <div class="flex-1 text-center py-1 glass-dark rounded">
                                 <span class="text-[9px] text-theme-muted">状态</span>
-                                <div class="text-[10px] font-medium" :class="account.enabled ? 'text-green-400' : 'text-gray-500'">
+                                <div class="text-[10px] font-medium"
+                                    :class="account.enabled ? 'text-green-400' : 'text-gray-500'">
                                     {{ account.enabled ? '启用' : '禁用' }}
                                 </div>
                             </div>
                             <div class="flex-1 text-center py-1 glass-dark rounded">
                                 <span class="text-[9px] text-theme-muted">结果</span>
-                                <div class="text-[10px] font-medium" :class="{'text-green-400': account.last_result === 'success', 'text-red-400': account.last_result === 'failed', 'text-gray-500': !account.last_result}">
-                                    {{ account.last_result === 'success' ? '成功' : account.last_result === 'failed' ? '失败' : '-' }}
+                                <div class="text-[10px] font-medium"
+                                    :class="{'text-green-400': account.last_result === 'success', 'text-red-400': account.last_result === 'failed', 'text-gray-500': !account.last_result}">
+                                    {{ account.last_result === 'success' ? '成功' : account.last_result === 'failed' ?
+                                    '失败' : '-' }}
                                 </div>
                             </div>
                         </div>
 
                         <!-- Remaining Time -->
-                        <div v-if="account.remaining_time" class="flex items-center justify-between mb-1.5 px-2 py-1 glass-dark rounded">
+                        <div v-if="account.remaining_time"
+                            class="flex items-center justify-between mb-1.5 px-2 py-1 glass-dark rounded">
                             <span class="text-[9px] text-theme-muted">剩余</span>
-                            <span class="text-[10px] font-mono font-medium text-blue-400">{{ account.remaining_time }}</span>
+                            <span class="text-[10px] font-mono font-medium text-blue-400">{{ account.remaining_time
+                                }}</span>
                         </div>
 
                         <!-- Uptime (已运行时间) -->
-                        <div v-if="account.start_time && account.last_result === 'success'" class="flex items-center justify-between mb-1.5 px-2 py-1 glass-dark rounded">
+                        <div v-if="account.start_time && account.last_result === 'success'"
+                            class="flex items-center justify-between mb-1.5 px-2 py-1 glass-dark rounded">
                             <span class="text-[9px] text-theme-muted">已运行</span>
-                            <span class="text-[10px] font-mono font-medium text-green-400">{{ formatUptime(account.uptime_seconds) }}</span>
+                            <span class="text-[10px] font-mono font-medium text-green-400">{{
+                                formatUptime(account.uptime_seconds) }}</span>
                         </div>
 
                         <!-- Countdown Timer -->
                         <div class="mb-1.5 py-1.5 glass-dark rounded text-center">
-                            <span class="text-[9px] text-theme-muted">下次 ({{ account.min_interval }}-{{ account.max_interval }}m)</span>
-                            <div class="text-base font-mono font-bold" :class="account.countdown > 0 ? 'text-yellow-400' : 'text-gray-500'">
+                            <span class="text-[9px] text-theme-muted">下次 ({{ account.min_interval }}-{{
+                                account.max_interval }}m)</span>
+                            <div class="text-base font-mono font-bold"
+                                :class="account.countdown > 0 ? 'text-yellow-400' : 'text-gray-500'">
                                 {{ formatCountdown(account.countdown) }}
                             </div>
                         </div>
@@ -289,8 +349,10 @@
                                 </button>
                             </div>
                             <div class="flex gap-1">
-                                <button @click="editAccount(account)" class="flex-1 py-1 glass hover:bg-white/10 text-theme text-[10px] rounded transition">编辑</button>
-                                <button @click="deleteAccount(account)" class="flex-1 py-1 bg-red-500/50 hover:bg-red-500/70 text-white text-[10px] rounded transition">删除</button>
+                                <button @click="editAccount(account)"
+                                    class="flex-1 py-1 glass hover:bg-white/10 text-theme text-[10px] rounded transition">编辑</button>
+                                <button @click="deleteAccount(account)"
+                                    class="flex-1 py-1 bg-red-500/50 hover:bg-red-500/70 text-white text-[10px] rounded transition">删除</button>
                             </div>
                         </div>
 
@@ -298,7 +360,8 @@
                         <div class="border-t border-white/10 pt-1.5">
                             <div class="flex items-center justify-between mb-1">
                                 <span class="text-[9px] text-theme-muted">日志</span>
-                                <button @click="refreshLogs(account)" class="text-[9px] text-blue-400 hover:text-blue-300">刷新</button>
+                                <button @click="refreshLogs(account)"
+                                    class="text-[9px] text-blue-400 hover:text-blue-300">刷新</button>
                             </div>
                             <div class="log-container h-24 overflow-y-auto glass-dark rounded p-1.5">
                                 <div v-if="account.logs && account.logs.length > 0">
@@ -316,8 +379,109 @@
             </div>
         </main>
 
+        <!-- Proxy Modal -->
+        <div v-if="showProxyModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+            <div class="glass-modal rounded-2xl w-full max-w-5xl mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-medium text-theme">代理管理</h3>
+                        <p class="text-xs text-theme-muted">管理代理节点（支持 WS/TLS、Reality、VMess 等）</p>
+                    </div>
+                    <button @click="showProxyModal = false"
+                        class="px-2 py-1 glass hover:bg-white/10 text-theme text-sm rounded transition">
+                        关闭
+                    </button>
+                </div>
+
+                <div class="p-6">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="text-xs text-theme-muted">节点数：{{ proxy.nodes.length }}</div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button @click="addProxyLinkPrompt"
+                                class="px-3 py-1.5 glass hover:bg-white/10 text-theme text-xs rounded-lg transition">
+                                导入链接
+                            </button>
+                            <button @click="syncSubscriptionPrompt('replace')"
+                                class="px-3 py-1.5 glass hover:bg-white/10 text-theme text-xs rounded-lg transition">
+                                同步订阅
+                            </button>
+                            <button @click="addProxyLinkPrompt"
+                                class="px-3 py-1.5 glass hover:bg-white/10 text-theme text-xs rounded-lg transition">
+                                手动添加
+                            </button>
+                        </div>
+                    </div>
+
+                    <div v-if="proxyError" class="mt-3 p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-xs">
+                        {{ proxyError }}
+                    </div>
+
+                    <div class="mt-4 glass-dark rounded-lg overflow-hidden">
+                        <div class="grid grid-cols-12 gap-2 px-3 py-2 text-[10px] text-theme-muted border-b border-white/10">
+                            <div class="col-span-2">协议</div>
+                            <div class="col-span-4">别名 / 地址</div>
+                            <div class="col-span-3">传输 / 安全</div>
+                            <div class="col-span-1">延时</div>
+                            <div class="col-span-2 text-right">操作</div>
+                        </div>
+
+                        <div v-if="proxy.nodes.length === 0" class="px-3 py-6 text-center text-xs text-theme-muted">
+                            暂无代理节点
+                        </div>
+
+                        <div v-for="node in proxy.nodes" :key="node.id" class="px-3 py-3 border-t border-white/5">
+                            <div class="grid grid-cols-12 gap-2 items-center">
+                                <div class="col-span-2">
+                                    <span class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                        {{ (node.type || 'proxy').toUpperCase() }}
+                                    </span>
+                                </div>
+                                <div class="col-span-4 min-w-0">
+                                    <div class="text-xs font-semibold text-theme truncate">{{ node.name || node.server }}</div>
+                                    <div class="text-[10px] text-theme-muted truncate">{{ node.server }}:{{ node.port }}</div>
+                                </div>
+                                <div class="col-span-3 flex flex-wrap gap-1">
+                                    <span class="px-2 py-0.5 text-[10px] rounded-full glass text-theme">{{ node.transport || '-' }}</span>
+                                    <span class="px-2 py-0.5 text-[10px] rounded-full glass text-theme">{{ node.security || (node.tls ? 'tls' : '-') }}</span>
+                                </div>
+                                <div class="col-span-1 text-xs font-semibold" :class="node.testStatus === 'ok' ? 'text-emerald-300' : node.testStatus === 'error' ? 'text-red-300' : 'text-theme-muted'">
+                                    {{ node.testStatus === 'ok' ? `${node.testLatency} ms` : node.testStatus === 'error' ? '错误' : '-' }}
+                                </div>
+                                <div class="col-span-2 flex items-center justify-end gap-2">
+                                    <button @click="testProxyNode(node)" :disabled="node.testStatus === 'testing'"
+                                        class="px-2 py-1 glass hover:bg-white/10 text-theme text-[10px] rounded transition">
+                                        {{ node.testStatus === 'testing' ? '测试中' : '测试' }}
+                                    </button>
+                                    <button @click="toggleNodeDetails(node)"
+                                        class="px-2 py-1 glass hover:bg-white/10 text-theme text-[10px] rounded transition">
+                                        {{ node.showDetails ? '收起' : '详情' }}
+                                    </button>
+                                    <button @click="removeProxyNode(node)"
+                                        class="px-2 py-1 bg-red-500/50 hover:bg-red-500/70 text-white text-[10px] rounded transition">
+                                        删除
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div v-if="node.showDetails" class="mt-2">
+                                <pre class="text-[10px] text-theme-secondary whitespace-pre-wrap break-words">{{ formatProxyNode(node) }}</pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center justify-end">
+                        <button @click="applyProxyRuntime" :disabled="proxyApplyLoading"
+                            class="px-4 py-2 bg-emerald-500/80 hover:bg-emerald-500 disabled:bg-emerald-500/40 text-white text-xs rounded-lg transition">
+                            {{ proxyApplyLoading ? '应用中...' : '保存并重启代理器' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Add/Edit Modal -->
-        <div v-if="showAddModal || showEditModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div v-if="showAddModal || showEditModal"
+            class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
             <div class="glass-modal rounded-2xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
                 <div class="px-6 py-4 border-b border-white/10">
                     <h3 class="text-lg font-medium text-theme">
@@ -329,92 +493,136 @@
                     <div class="p-6 space-y-4">
                         <div>
                             <label class="block text-sm text-theme-secondary mb-1">账号名称</label>
-                            <input
-                                v-model="formData.name"
-                                type="text"
+                            <input v-model="formData.name" type="text"
                                 class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
-                                placeholder="例如：美国机房1"
-                                required
-                            >
+                                placeholder="例如：美国机房1" required>
                         </div>
 
                         <div>
                             <label class="block text-sm text-theme-secondary mb-1">Server ID</label>
-                            <input
-                                v-model="formData.server_id"
-                                type="text"
+                            <input v-model="formData.server_id" type="text"
                                 class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
-                                placeholder="从 URL 中获取"
-                                required
-                            >
+                                placeholder="从 URL 中获取" required>
                         </div>
 
                         <div>
-                            <label class="block text-sm text-theme-secondary mb-1">Cookie</label>
-                            <textarea
-                                v-model="formData.cookie"
-                                rows="3"
+                            <label class="block text-sm text-theme-secondary mb-1">平台</label>
+                            <select v-model="formData.platform"
+                                class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none">
+                                <option value="lemehost">LemeHost</option>
+                                <option value="freexcraft">FreeXCraft</option>
+                                <option value="minestrator">Minestrator</option>
+                                <option value="keepalive">KeepAlive</option>
+                            </select>
+                        </div>
+
+                        <div v-if="formData.platform !== 'minestrator' && formData.platform !== 'keepalive'">
+                            <label class="block text-sm text-theme-secondary mb-1">
+                                Cookie
+                            </label>
+                            <textarea v-model="formData.cookie" rows="3"
                                 class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none font-mono"
-                                placeholder="从浏览器开发者工具复制"
-                                :required="!showEditModal"
-                            ></textarea>
+                                placeholder="从浏览器开发者工具复制" :required="!showEditModal"></textarea>
+                        </div>
+
+                        <div v-if="formData.platform === 'minestrator'" class="space-y-4">
+                            <div>
+                                <label class="block text-sm text-theme-secondary mb-1">API Key</label>
+                                <input v-model="formData.minestrator_api_key" type="password"
+                                    class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none font-mono"
+                                    placeholder="留空则不更新" :required="!showEditModal">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-theme-secondary mb-1">API URL</label>
+                                <input v-model="formData.minestrator_api_url" type="text"
+                                    class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
+                                    placeholder="https://mine.sttr.io/server/{server_id}/poweraction">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-theme-secondary mb-1">User-Agent</label>
+                                <input v-model="formData.minestrator_user_agent" type="text"
+                                    class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
+                                    placeholder="Mozilla/5.0 (Windows NT 10.0; Win64; x64)">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-theme-secondary mb-1">Kill 后等待 (秒)</label>
+                                <input v-model.number="formData.minestrator_wait_seconds" type="number" min="1"
+                                    class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
+                                    placeholder="30">
+                            </div>
+                        </div>
+
+                        <div v-if="formData.platform === 'keepalive'" class="space-y-4">
+                            <div>
+                                <label class="block text-sm text-theme-secondary mb-1">心跳 URL</label>
+                                <input v-model="formData.keepalive_heartbeat_url" type="text"
+                                    class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
+                                    placeholder="https://api.altare.sh/api/core/updates/subscribe?token=...">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-theme-secondary mb-1">状态查询 URL</label>
+                                <input v-model="formData.keepalive_check_url" type="text"
+                                    class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
+                                    placeholder="可选">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-theme-secondary mb-1">等待秒数</label>
+                                <input v-model.number="formData.keepalive_wait_seconds" type="number" min="1"
+                                    class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
+                                    placeholder="60">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-theme-secondary mb-1">代理节点</label>
+                            <select v-model="formData.proxy_node_id"
+                                class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none">
+                                <option value="">直连</option>
+                                <option v-for="node in proxy.nodes" :key="node.id" :value="node.id">
+                                    {{ node.name || node.server }}
+                                </option>
+                            </select>
+                            <p class="text-xs text-theme-muted mt-1">每个账号可独立选择代理节点</p>
                         </div>
 
                         <!-- 时间区间设置 -->
-                        <div class="p-3 glass-dark rounded-lg">
+                        <div v-show="formData.platform !== 'keepalive'" class="p-3 glass-dark rounded-lg">
                             <label class="block text-sm text-theme-secondary mb-2">续期时间间隔（分钟）</label>
                             <div class="flex items-center gap-3">
                                 <div class="flex-1">
                                     <label class="block text-xs text-theme-muted mb-1">最小</label>
-                                    <input
-                                        v-model.number="formData.min_interval"
-                                        type="number"
-                                        min="1"
-                                        class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
-                                    >
+                                    <input v-model.number="formData.min_interval" type="number" min="1"
+                                        class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none">
                                 </div>
                                 <span class="text-theme-muted pt-5">~</span>
                                 <div class="flex-1">
                                     <label class="block text-xs text-theme-muted mb-1">最大</label>
-                                    <input
-                                        v-model.number="formData.max_interval"
-                                        type="number"
-                                        min="1"
-                                        class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
-                                    >
+                                    <input v-model.number="formData.max_interval" type="number" min="1"
+                                        class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none">
                                 </div>
                             </div>
                             <p class="text-xs text-theme-muted mt-2">每次续期后随机等待该区间内的时间</p>
                         </div>
 
                         <div v-if="showEditModal" class="flex items-center gap-2">
-                            <input
-                                type="checkbox"
-                                v-model="formData.enabled"
-                                id="enabled"
-                                class="w-4 h-4 rounded bg-white/10 border-white/20"
-                            >
+                            <input type="checkbox" v-model="formData.enabled" id="enabled"
+                                class="w-4 h-4 rounded bg-white/10 border-white/20">
                             <label for="enabled" class="text-sm text-theme-secondary">启用自动续期</label>
                         </div>
 
-                        <div v-if="formError" class="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                        <div v-if="formError"
+                            class="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
                             {{ formError }}
                         </div>
                     </div>
 
                     <div class="px-6 py-4 border-t border-white/10 flex justify-end gap-3">
-                        <button
-                            type="button"
-                            @click="closeModal"
-                            class="px-4 py-2 glass hover:bg-white/10 text-theme text-sm rounded-lg transition"
-                        >
+                        <button type="button" @click="closeModal"
+                            class="px-4 py-2 glass hover:bg-white/10 text-theme text-sm rounded-lg transition">
                             取消
                         </button>
-                        <button
-                            type="submit"
-                            :disabled="formLoading"
-                            class="px-4 py-2 bg-blue-500/80 hover:bg-blue-500 disabled:bg-blue-500/40 text-white text-sm rounded-lg transition"
-                        >
+                        <button type="submit" :disabled="formLoading"
+                            class="px-4 py-2 bg-blue-500/80 hover:bg-blue-500 disabled:bg-blue-500/40 text-white text-sm rounded-lg transition">
                             {{ formLoading ? '保存中...' : '保存' }}
                         </button>
                     </div>
@@ -423,7 +631,8 @@
         </div>
 
         <!-- Password Change Modal -->
-        <div v-if="showPasswordModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div v-if="showPasswordModal"
+            class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
             <div class="glass-modal rounded-2xl w-full max-w-sm mx-4">
                 <div class="px-6 py-4 border-b border-white/10">
                     <h3 class="text-lg font-medium text-theme">修改密码</h3>
@@ -433,55 +642,38 @@
                     <div class="p-6 space-y-4">
                         <div>
                             <label class="block text-sm text-theme-secondary mb-1">旧密码</label>
-                            <input
-                                v-model="passwordData.old_password"
-                                type="password"
+                            <input v-model="passwordData.old_password" type="password"
                                 class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
-                                placeholder="请输入当前密码"
-                                required
-                            >
+                                placeholder="请输入当前密码" required>
                         </div>
 
                         <div>
                             <label class="block text-sm text-theme-secondary mb-1">新密码</label>
-                            <input
-                                v-model="passwordData.new_password"
-                                type="password"
+                            <input v-model="passwordData.new_password" type="password"
                                 class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
-                                placeholder="至少6位"
-                                required
-                            >
+                                placeholder="至少6位" required>
                         </div>
 
                         <div>
                             <label class="block text-sm text-theme-secondary mb-1">确认新密码</label>
-                            <input
-                                v-model="passwordData.confirm_password"
-                                type="password"
+                            <input v-model="passwordData.confirm_password" type="password"
                                 class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
-                                placeholder="再次输入新密码"
-                                required
-                            >
+                                placeholder="再次输入新密码" required>
                         </div>
 
-                        <div v-if="passwordError" class="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+                        <div v-if="passwordError"
+                            class="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
                             {{ passwordError }}
                         </div>
                     </div>
 
                     <div class="px-6 py-4 border-t border-white/10 flex justify-end gap-3">
-                        <button
-                            type="button"
-                            @click="closePasswordModal"
-                            class="px-4 py-2 glass hover:bg-white/10 text-theme text-sm rounded-lg transition"
-                        >
+                        <button type="button" @click="closePasswordModal"
+                            class="px-4 py-2 glass hover:bg-white/10 text-theme text-sm rounded-lg transition">
                             取消
                         </button>
-                        <button
-                            type="submit"
-                            :disabled="passwordLoading"
-                            class="px-4 py-2 bg-blue-500/80 hover:bg-blue-500 disabled:bg-blue-500/40 text-white text-sm rounded-lg transition"
-                        >
+                        <button type="submit" :disabled="passwordLoading"
+                            class="px-4 py-2 bg-blue-500/80 hover:bg-blue-500 disabled:bg-blue-500/40 text-white text-sm rounded-lg transition">
                             {{ passwordLoading ? '保存中...' : '保存' }}
                         </button>
                     </div>
@@ -490,15 +682,13 @@
         </div>
 
         <!-- Toast -->
-        <div
-            v-if="toast.show"
+        <div v-if="toast.show"
             class="fixed bottom-4 right-4 px-4 py-3 rounded-xl shadow-lg text-white text-sm transition-all backdrop-blur-md"
-            :class="toast.type === 'success' ? 'bg-green-500/80' : 'bg-red-500/80'"
-        >
+            :class="toast.type === 'success' ? 'bg-green-500/80' : 'bg-red-500/80'">
             {{ toast.message }}
         </div>
     </div>
-{% endraw %}
+    {% endraw %}
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script>
@@ -508,6 +698,12 @@
             setup() {
                 const loading = ref(true)
                 const accounts = ref([])
+                const proxy = reactive({ nodes: [], subscription_url: '' })
+                const proxyForm = reactive({ subscription_url: '' })
+                const proxyError = ref('')
+                const proxyActionLoading = ref(false)
+                const proxyApplyLoading = ref(false)
+                const showProxyModal = ref(false)
                 const showAddModal = ref(false)
                 const showEditModal = ref(false)
                 const showPasswordModal = ref(false)
@@ -518,6 +714,15 @@
                     server_id: '',
                     original_server_id: '',
                     cookie: '',
+                    proxy_node_id: '',
+                    platform: 'lemehost',
+                    minestrator_api_key: '',
+                    minestrator_api_url: '',
+                    minestrator_user_agent: '',
+                    minestrator_wait_seconds: 30,
+                    keepalive_wait_seconds: 60,
+                    keepalive_heartbeat_url: '',
+                    keepalive_check_url: '',
                     enabled: true,
                     min_interval: 15,
                     max_interval: 25
@@ -556,6 +761,185 @@
                     toast.type = type
                     toast.show = true
                     setTimeout(() => { toast.show = false }, 3000)
+                }
+
+                const refreshProxyConfig = async () => {
+                    proxyError.value = ''
+                    try {
+                        const res = await fetch('/api/proxy/config')
+                        if (res.status === 401) {
+                            window.location.href = '/login'
+                            return
+                        }
+                        const data = await res.json()
+                        proxy.nodes = (data.nodes || []).map(n => ({
+                            ...n,
+                            showDetails: false,
+                            testStatus: '',
+                            testLatency: null,
+                            testError: ''
+                        }))
+                        proxy.subscription_url = data.subscription_url || ''
+                        proxyForm.subscription_url = proxy.subscription_url
+                    } catch (e) {
+                        proxyError.value = '加载代理配置失败'
+                    }
+                }
+
+                const addProxyLink = async (link) => {
+                    const cleaned = (link || '').trim()
+                    if (!cleaned) {
+                        proxyError.value = '代理链接不能为空'
+                        return
+                    }
+                    proxyActionLoading.value = true
+                    proxyError.value = ''
+                    try {
+                        const res = await fetch('/api/proxy/link', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ link: cleaned })
+                        })
+                        const data = await res.json()
+                        if (data.success) {
+                            const node = {
+                                ...data.node,
+                                showDetails: false,
+                                testStatus: '',
+                                testLatency: null,
+                                testError: ''
+                            }
+                            proxy.nodes.unshift(node)
+                            showToast('代理已添加', 'success')
+                        } else {
+                            proxyError.value = data.error || '添加失败'
+                        }
+                    } catch (e) {
+                        proxyError.value = '网络错误'
+                    } finally {
+                        proxyActionLoading.value = false
+                    }
+                }
+
+                const addProxyLinkPrompt = async () => {
+                    const link = window.prompt('请输入代理链接：')
+                    if (!link) return
+                    await addProxyLink(link)
+                }
+
+                const syncSubscription = async (mode, url) => {
+                    const cleaned = (url || '').trim()
+                    if (!cleaned) {
+                        proxyError.value = '订阅链接不能为空'
+                        return
+                    }
+                    proxyActionLoading.value = true
+                    proxyError.value = ''
+                    try {
+                        const res = await fetch('/api/proxy/subscription', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ url: cleaned, mode })
+                        })
+                        const data = await res.json()
+                        if (data.success) {
+                            await refreshProxyConfig()
+                            showToast(mode === 'append' ? '订阅已追加' : '订阅已同步', 'success')
+                        } else {
+                            proxyError.value = data.error || '同步失败'
+                        }
+                    } catch (e) {
+                        proxyError.value = '网络错误'
+                    } finally {
+                        proxyActionLoading.value = false
+                    }
+                }
+
+                const syncSubscriptionPrompt = async (mode) => {
+                    const url = window.prompt('请输入订阅链接：', proxyForm.subscription_url || '')
+                    if (!url) return
+                    proxyForm.subscription_url = url
+                    await syncSubscription(mode, url)
+                }
+
+                const removeProxyNode = async (node) => {
+                    if (!confirm(`确定要删除节点 "${node.name || node.server}" 吗？`)) return
+                    proxyActionLoading.value = true
+                    proxyError.value = ''
+                    try {
+                        const res = await fetch(`/api/proxy/nodes/${node.id}`, { method: 'DELETE' })
+                        const data = await res.json()
+                        if (data.success) {
+                            proxy.nodes = proxy.nodes.filter(n => n.id !== node.id)
+                            showToast('节点已删除', 'success')
+                        } else {
+                            proxyError.value = data.error || '删除失败'
+                        }
+                    } catch (e) {
+                        proxyError.value = '网络错误'
+                    } finally {
+                        proxyActionLoading.value = false
+                    }
+                }
+
+                const testProxyNode = async (node) => {
+                    node.testStatus = 'testing'
+                    node.testError = ''
+                    try {
+                        const res = await fetch('/api/proxy/test', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ node_id: node.id })
+                        })
+                        const data = await res.json()
+                        if (data.success) {
+                            node.testStatus = 'ok'
+                            node.testLatency = data.latency_ms
+                        } else {
+                            node.testStatus = 'error'
+                            node.testError = data.error || '测试失败'
+                        }
+                    } catch (e) {
+                        node.testStatus = 'error'
+                        node.testError = '网络错误'
+                    }
+                }
+
+                const toggleNodeDetails = (node) => {
+                    node.showDetails = !node.showDetails
+                }
+
+                const formatProxyNode = (node) => {
+                    const copy = { ...node }
+                    delete copy.showDetails
+                    delete copy.testStatus
+                    delete copy.testLatency
+                    delete copy.testError
+                    return JSON.stringify(copy, null, 2)
+                }
+
+                const applyProxyRuntime = async () => {
+                    proxyApplyLoading.value = true
+                    proxyError.value = ''
+                    try {
+                        const res = await fetch('/api/proxy/apply', { method: 'POST' })
+                        const data = await res.json()
+                        if (data.success) {
+                            showToast('代理已重启', 'success')
+                        } else {
+                            proxyError.value = data.error || '应用失败'
+                        }
+                    } catch (e) {
+                        proxyError.value = '网络错误'
+                    } finally {
+                        proxyApplyLoading.value = false
+                    }
+                }
+
+                const getProxyName = (nodeId) => {
+                    if (!nodeId) return '直连'
+                    const node = proxy.nodes.find(n => n.id === nodeId)
+                    return node ? (node.name || node.server || node.id) : '未知'
                 }
 
                 const formatCountdown = (seconds) => {
@@ -673,6 +1057,15 @@
                     formData.server_id = account.server_id
                     formData.original_server_id = account.server_id
                     formData.cookie = account.cookie || ''
+                    formData.proxy_node_id = account.proxy_node_id || ''
+                    formData.platform = account.platform || 'lemehost'
+                    formData.minestrator_api_key = ''
+                    formData.minestrator_api_url = account.minestrator_api_url || ''
+                    formData.minestrator_user_agent = account.minestrator_user_agent || ''
+                    formData.minestrator_wait_seconds = account.minestrator_wait_seconds || 30
+                    formData.keepalive_heartbeat_url = account.keepalive_heartbeat_url || ''
+                    formData.keepalive_check_url = account.keepalive_check_url || ''
+                    formData.keepalive_wait_seconds = account.keepalive_wait_seconds || 60
                     formData.enabled = account.enabled
                     formData.min_interval = account.min_interval || 15
                     formData.max_interval = account.max_interval || 25
@@ -728,6 +1121,15 @@
                     formData.server_id = ''
                     formData.original_server_id = ''
                     formData.cookie = ''
+                    formData.proxy_node_id = ''
+                    formData.platform = 'lemehost'
+                    formData.minestrator_api_key = ''
+                    formData.minestrator_api_url = ''
+                    formData.minestrator_user_agent = ''
+                    formData.minestrator_wait_seconds = 30
+                    formData.keepalive_heartbeat_url = ''
+                    formData.keepalive_check_url = ''
+                    formData.keepalive_wait_seconds = 60
                     formData.enabled = true
                     formData.min_interval = 15
                     formData.max_interval = 25
@@ -752,6 +1154,15 @@
                                 name: formData.name,
                                 server_id: formData.server_id,
                                 cookie: formData.cookie,
+                                platform: formData.platform,
+                                minestrator_api_key: formData.minestrator_api_key,
+                                minestrator_api_url: formData.minestrator_api_url,
+                                minestrator_user_agent: formData.minestrator_user_agent,
+                                minestrator_wait_seconds: formData.minestrator_wait_seconds,
+                                keepalive_heartbeat_url: formData.keepalive_heartbeat_url,
+                                keepalive_check_url: formData.keepalive_check_url,
+                                keepalive_wait_seconds: formData.keepalive_wait_seconds,
+                                proxy_node_id: formData.proxy_node_id,
                                 min_interval: formData.min_interval,
                                 max_interval: formData.max_interval
                             })
@@ -787,6 +1198,15 @@
                             name: formData.name,
                             server_id: formData.server_id,
                             enabled: formData.enabled,
+                            proxy_node_id: formData.proxy_node_id,
+                            platform: formData.platform,
+                            minestrator_api_key: formData.minestrator_api_key,
+                            minestrator_api_url: formData.minestrator_api_url,
+                            minestrator_user_agent: formData.minestrator_user_agent,
+                            minestrator_wait_seconds: formData.minestrator_wait_seconds,
+                            keepalive_heartbeat_url: formData.keepalive_heartbeat_url,
+                            keepalive_check_url: formData.keepalive_check_url,
+                            keepalive_wait_seconds: formData.keepalive_wait_seconds,
                             min_interval: formData.min_interval,
                             max_interval: formData.max_interval
                         }
@@ -870,6 +1290,7 @@
 
                 onMounted(() => {
                     fetchAccounts()
+                    refreshProxyConfig()
                     // 每秒更新倒计时
                     countdownTimer = setInterval(updateCountdowns, 1000)
                     // 每 30 秒刷新账号数据
@@ -885,6 +1306,11 @@
                 return {
                     loading,
                     accounts,
+                    proxy,
+                    proxyError,
+                    proxyActionLoading,
+                    proxyApplyLoading,
+                    showProxyModal,
                     showAddModal,
                     showEditModal,
                     showPasswordModal,
@@ -897,6 +1323,15 @@
                     toast,
                     isDark,
                     toggleTheme,
+                    refreshProxyConfig,
+                    addProxyLinkPrompt,
+                    syncSubscriptionPrompt,
+                    removeProxyNode,
+                    testProxyNode,
+                    applyProxyRuntime,
+                    toggleNodeDetails,
+                    formatProxyNode,
+                    getProxyName,
                     formatLog,
                     formatCountdown,
                     formatUptime,
@@ -916,4 +1351,5 @@
         }).mount('#app')
     </script>
 </body>
+
 </html>

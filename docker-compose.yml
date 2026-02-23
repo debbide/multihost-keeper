@@ -13,6 +13,8 @@ services:
       - TZ=Asia/Shanghai
       - CONFIG_FILE=/app/config/config.json
       - AUTH_FILE=/app/config/auth.json
+      - PROXY_NODES_FILE=/app/config/proxy_nodes.json
+      - PROXY_RUNTIME_CONFIG_FILE=/app/config/singbox_config.json
       - LOG_FILE=/app/logs/lemehost.log
       - STATE_FILE=/app/logs/state.json
       - SECRET_KEY=change-this-to-random-string

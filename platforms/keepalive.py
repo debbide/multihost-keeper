@@ -33,6 +33,7 @@ def process(session, account, log):
         "Sec-Fetch-Dest": "empty",
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-origin",
+        "Priority": "u=1, i",
         "Connection": "keep-alive"
     }
     
@@ -62,14 +63,12 @@ def process(session, account, log):
     if heartbeat_url and "altare.sh" in heartbeat_url:
         headers["Origin"] = "https://altare.sh"
         headers["Referer"] = "https://altare.sh/billing/rewards/afk"
-        headers["Sec-Fetch-Site"] = "same-origin"
         
         # 尝试由 URL 探测 tenant_id
         match = re.search(r'tenants/([a-z0-9-]+)', heartbeat_url)
         if match:
             tenant_id = match.group(1)
             headers["X-Tenant-Id"] = tenant_id
-            log(f"🔎 探测到 X-Tenant-Id: {tenant_id[:10]}***", "INFO", server_id)
 
     try:
         wait_seconds = int(wait_seconds)
@@ -84,10 +83,22 @@ def process(session, account, log):
                 # 注入当前最新的 Cookies
                 c_str = "; ".join([f"{k}={v}" for k, v in current_cookies.items()])
                 s_headers["Cookie"] = c_str
-                # 使用独立的请求以防止主 Session 被阻塞
+                # 保持 Chrome 142 身份
                 with requests.get(url, headers=s_headers, stream=True, timeout=120, verify=False) as r:
                     if r.status_code == 200:
                         log("✅ SSE 订阅成功：在线状态维持中...", "INFO", server_id)
+                        
+                        # 【核心补丁：会话绑定】在 SSE 建立后，必须发送 attach 请求
+                        if tenant_id and "altare.sh" in heartbeat_url:
+                            try:
+                                # 修正 attach URL 构造方式
+                                base_path = heartbeat_url.split("/heartbeat")[0]
+                                attach_url = f"{base_path}/attach?tenantId={tenant_id}"
+                                log("🔗 发送会话绑定请求 (attach)...", "INFO", server_id)
+                                requests.post(attach_url, headers=s_headers, data=None, timeout=10, verify=False)
+                            except:
+                                pass
+                        
                         for _ in r.iter_lines():
                             if not os.path.exists(config_path): break
                     else:
@@ -100,21 +111,21 @@ def process(session, account, log):
     if heartbeat_url:
         u = heartbeat_url.replace("/heartbeat", "/start") if "altare.sh" in heartbeat_url else heartbeat_url.replace("/heartbeat", "/join")
         try:
-            log(f"🚀 发送挂机开始请求: {u.split('/')[-1]}...", "INFO", server_id)
+            log(f"🚀 发送状态激活请求: {u.split('/')[-1]}...", "INFO", server_id)
             # 🛑 核心修复：根据抓包，Body 必须绝对为空 (Content-Length: 0)
             resp = session.post(u, headers=headers, data=None, timeout=15, verify=False)
             if resp.status_code == 409:
-                log("💡 提示 (409): 会话已激活。请确保已关闭所有 Altare.sh 浏览器标签，否则可能导致锁分。", "WARNING", server_id)
+                log("✨ 服务器反馈：AFK 计分线程已在运行 (409 正常状态)", "INFO", server_id)
             else:
                 try:
                     res_json = resp.json()
-                    log(f"💡 请求结果 ({resp.status_code}): {json.dumps(res_json)[:100]}", "INFO", server_id)
+                    log(f"💡 激活成功 ({resp.status_code}): {json.dumps(res_json)[:100]}", "INFO", server_id)
                 except:
-                    log(f"💡 请求结果 ({resp.status_code}): {resp.text[:50]}", "INFO", server_id)
+                    log(f"💡 激活结果 ({resp.status_code}): {resp.text[:50]}", "INFO", server_id)
         except Exception as e:
-            log(f"⚠️ 开始请求异常: {e}", "WARNING", server_id)
+            log(f"⚠️ 激活请求异常: {e}", "WARNING", server_id)
 
-    # 启动 SSE (在 Start 之后启动，避免竞争)
+    # 启动 SSE (在 Start 之后启动，并由内部触发 attach 绑定)
     if heartbeat_url and "altare.sh" in heartbeat_url and token_val:
         subscribe_url = f"https://altare.sh/api/core/updates/subscribe?token={token_val}"
         if tenant_id:
@@ -124,7 +135,6 @@ def process(session, account, log):
         sse_headers["Accept"] = "text/event-stream"
         sse_headers.pop("Content-Type", None)
         sse_headers["Cache-Control"] = "no-cache"
-        # 传入 session.cookies 以便实时同步
         threading.Thread(target=maintain_sse_subscription, args=(subscribe_url, sse_headers, session.cookies), daemon=True).start()
 
     while True:
@@ -154,14 +164,14 @@ def process(session, account, log):
 
         if heartbeat_url:
             try:
-                # 重新同步 XSRF
+                # 重新同步 XSRF 令牌
                 for k, v in session.cookies.items():
                     if k == "XSRF-TOKEN":
                         headers["X-XSRF-TOKEN"] = unquote(v)
 
                 log("❤️ 发送心跳请求...", "INFO", server_id)
                 if "altare.sh" in heartbeat_url:
-                    # ✅ 同样确保心跳包 Body 为空
+                    # 🛑 核心修复：确保心跳 Body 同样为空
                     resp = session.post(heartbeat_url, headers=headers, data=None, timeout=15, verify=False)
                 else:
                     resp = session.get(heartbeat_url, headers=headers, timeout=15, verify=False)
@@ -186,8 +196,8 @@ def process(session, account, log):
         else:
             log("✅ 伪装心跳成功", "INFO", server_id)
 
-        # 💰 初始化以及之后每 5 次心跳查询一次
-        if check_url and (loop_count == 1 or loop_count % 5 == 0):
+        # 💰 积分查询逻辑 (每 10 次查一次，降低压力)
+        if check_url and (loop_count == 1 or loop_count % 10 == 0):
             try:
                 log("💰 周期性查询积分...", "INFO", server_id)
                 resp = session.get(check_url, headers=headers, timeout=15, verify=False)

@@ -58,6 +58,17 @@ def process(session, account, log):
         headers["Origin"] = "https://altare.sh"
         headers["Referer"] = "https://altare.sh/billing/rewards/afk"
         headers["Sec-Fetch-Site"] = "same-origin"
+        
+        # 尝试从 URL 中提取 tenant_id (例如: /api/tenants/677557c8.../rewards/afk/heartbeat)
+        try:
+            parts = heartbeat_url.split("/")
+            if "tenants" in parts:
+                idx = parts.index("tenants")
+                tenant_id = parts[idx + 1]
+                headers["X-Tenant-Id"] = tenant_id
+                log(f"🔎 自动提取到 X-Tenant-Id: {tenant_id[:8]}***", "INFO", server_id)
+        except:
+            pass
 
     try:
         wait_seconds = int(wait_seconds)
@@ -79,8 +90,12 @@ def process(session, account, log):
             time.sleep(10)
 
     if heartbeat_url and "altare.sh" in heartbeat_url and token_val:
-        # 构建 SSE 订阅 URL
+        # 构建 SSE 订阅 URL，并注入 tenant 信息（如果存在）
         subscribe_url = f"https://altare.sh/api/core/updates/subscribe?token={token_val}"
+        t_id_search = [v for k, v in headers.items() if k.lower() == "x-tenant-id"]
+        if t_id_search:
+             subscribe_url += f"&tenant={t_id_search[0]}"
+             
         sse_headers = headers.copy()
         sse_headers["Accept"] = "text/event-stream"
         sse_headers.pop("Content-Type", None)

@@ -1,4 +1,5 @@
 import time
+from urllib.parse import unquote
 
 
 def process(session, account, log):
@@ -31,6 +32,11 @@ def process(session, account, log):
             headers["Authorization"] = credential
         elif "=" in credential:
             headers["Cookie"] = credential
+            # 自动将 Cookie 注入 Session 以便后续提取 XSRF-TOKEN
+            for item in credential.split(';'):
+                if '=' in item:
+                    k, v = item.strip().split('=', 1)
+                    session.cookies.set(k.strip(), v.strip())
         elif len(credential.split("-")) >= 4:
             headers["Authorization"] = f"Bearer {credential}"
         else:
@@ -55,6 +61,11 @@ def process(session, account, log):
 
         if heartbeat_url:
             try:
+                # 自动关联 XSRF 令牌 (从刚才注入或上一轮返回的 Cookie 中提取)
+                for k, v in session.cookies.items():
+                    if k == "XSRF-TOKEN":
+                        headers["X-XSRF-TOKEN"] = unquote(v)
+
                 log("❤️ 发送心跳请求...", "INFO", server_id)
                 # Altare.sh 强制要求使用 POST 才能拿积分
                 if "altare.sh" in heartbeat_url:

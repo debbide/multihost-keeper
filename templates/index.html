@@ -603,6 +603,13 @@
                                     class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
                                     placeholder="60">
                             </div>
+                            <div>
+                                <label class="block text-sm text-theme-secondary mb-1">重新激活间隔 (秒)</label>
+                                <input v-model.number="formData.keepalive_start_interval" type="number" min="0"
+                                    class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none"
+                                    placeholder="900">
+                                <p class="text-xs text-theme-muted mt-1">设置为 0 表示不定时 /start</p>
+                            </div>
                         </div>
 
                         <div>
@@ -753,6 +760,7 @@
                     minestrator_user_agent: '',
                     minestrator_wait_seconds: 30,
                     keepalive_wait_seconds: 60,
+                    keepalive_start_interval: 900,
                     keepalive_heartbeat_url: '',
                     keepalive_check_url: '',
                     enabled: true,
@@ -1098,6 +1106,7 @@
                     formData.keepalive_heartbeat_url = account.keepalive_heartbeat_url || ''
                     formData.keepalive_check_url = account.keepalive_check_url || ''
                     formData.keepalive_wait_seconds = account.keepalive_wait_seconds || 60
+                    formData.keepalive_start_interval = account.keepalive_start_interval || 900
                     formData.enabled = account.enabled
                     formData.min_interval = account.min_interval || 15
                     formData.max_interval = account.max_interval || 25
@@ -1162,6 +1171,7 @@
                     formData.keepalive_heartbeat_url = ''
                     formData.keepalive_check_url = ''
                     formData.keepalive_wait_seconds = 60
+                    formData.keepalive_start_interval = 900
                     formData.enabled = true
                     formData.min_interval = 15
                     formData.max_interval = 25
@@ -1194,6 +1204,7 @@
                                 keepalive_heartbeat_url: formData.keepalive_heartbeat_url,
                                 keepalive_check_url: formData.keepalive_check_url,
                                 keepalive_wait_seconds: formData.keepalive_wait_seconds,
+                                keepalive_start_interval: formData.keepalive_start_interval,
                                 proxy_node_id: formData.proxy_node_id,
                                 min_interval: formData.min_interval,
                                 max_interval: formData.max_interval
@@ -1239,6 +1250,7 @@
                             keepalive_heartbeat_url: formData.keepalive_heartbeat_url,
                             keepalive_check_url: formData.keepalive_check_url,
                             keepalive_wait_seconds: formData.keepalive_wait_seconds,
+                            keepalive_start_interval: formData.keepalive_start_interval,
                             min_interval: formData.min_interval,
                             max_interval: formData.max_interval
                         }

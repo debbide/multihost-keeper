@@ -24,7 +24,9 @@ app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 
 DATA_DIR = os.environ.get("DATA_DIR", "/app/data")
 AUTH_FILE = os.environ.get("AUTH_FILE", os.path.join(DATA_DIR, "auth.json"))
-PROXY_NODES_FILE = os.environ.get("PROXY_NODES_FILE", os.path.join(DATA_DIR, "proxy_nodes.json"))
+PROXY_NODES_FILE = os.environ.get(
+    "PROXY_NODES_FILE", os.path.join(DATA_DIR, "proxy_nodes.json")
+)
 PROXY_RUNTIME_CONFIG_FILE = os.environ.get(
     "PROXY_RUNTIME_CONFIG_FILE", os.path.join(DATA_DIR, "singbox_config.json")
 )
@@ -300,6 +302,7 @@ def get_accounts():
             "minestrator_user_agent": acc.get("minestrator_user_agent", ""),
             "minestrator_wait_seconds": acc.get("minestrator_wait_seconds", 30),
             "keepalive_wait_seconds": acc.get("keepalive_wait_seconds", 60),
+            "keepalive_start_interval": acc.get("keepalive_start_interval", 900),
             "keepalive_heartbeat_url": acc.get("keepalive_heartbeat_url", ""),
             "keepalive_check_url": acc.get("keepalive_check_url", ""),
             "proxy_node_id": acc.get("proxy_node_id", ""),
@@ -333,6 +336,7 @@ def add_account():
     minestrator_wait_seconds = data.get("minestrator_wait_seconds", 30)
 
     keepalive_wait_seconds = data.get("keepalive_wait_seconds", 60)
+    keepalive_start_interval = data.get("keepalive_start_interval", 900)
     keepalive_heartbeat_url = data.get("keepalive_heartbeat_url", "").strip()
     keepalive_check_url = data.get("keepalive_check_url", "").strip()
 
@@ -373,6 +377,7 @@ def add_account():
         "minestrator_user_agent": minestrator_user_agent,
         "minestrator_wait_seconds": minestrator_wait_seconds,
         "keepalive_wait_seconds": keepalive_wait_seconds,
+        "keepalive_start_interval": keepalive_start_interval,
         "keepalive_heartbeat_url": keepalive_heartbeat_url,
         "keepalive_check_url": keepalive_check_url,
         "enabled": True,
@@ -420,6 +425,13 @@ def update_account(server_id):
             if "keepalive_wait_seconds" in data:
                 try:
                     acc["keepalive_wait_seconds"] = int(data["keepalive_wait_seconds"])
+                except (TypeError, ValueError):
+                    pass
+            if "keepalive_start_interval" in data:
+                try:
+                    acc["keepalive_start_interval"] = int(
+                        data["keepalive_start_interval"]
+                    )
                 except (TypeError, ValueError):
                     pass
             if "keepalive_heartbeat_url" in data:

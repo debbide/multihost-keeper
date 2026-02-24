@@ -24,7 +24,9 @@ DATA_DIR = os.environ.get("DATA_DIR", "/app/data")
 CONFIG_FILE = os.environ.get("CONFIG_FILE", os.path.join(DATA_DIR, "config.json"))
 LOG_FILE = os.environ.get("LOG_FILE", os.path.join(DATA_DIR, "lemehost.log"))
 STATE_FILE = os.environ.get("STATE_FILE", os.path.join(DATA_DIR, "state.json"))
-PROXY_NODES_FILE = os.environ.get("PROXY_NODES_FILE", os.path.join(DATA_DIR, "proxy_nodes.json"))
+PROXY_NODES_FILE = os.environ.get(
+    "PROXY_NODES_FILE", os.path.join(DATA_DIR, "proxy_nodes.json")
+)
 PROXY_BASE_PORT = 20000
 
 DEFAULT_MIN_INTERVAL = 15
@@ -100,6 +102,13 @@ def get_proxy_port(node_id):
     nodes = load_proxy_nodes()
     for idx, node in enumerate(nodes):
         if node.get("id") == node_id:
+            local_port = node.get("local_port")
+            try:
+                local_port = int(local_port)
+            except (TypeError, ValueError):
+                local_port = None
+            if local_port and local_port > 0:
+                return local_port
             return PROXY_BASE_PORT + idx
     return None
 
@@ -369,8 +378,10 @@ def background_task():
     while True:
         try:
             accounts = load_config()
-            current_sids = {acc.get("server_id") for acc in accounts if acc.get("server_id")}
-            
+            current_sids = {
+                acc.get("server_id") for acc in accounts if acc.get("server_id")
+            }
+
             for acc in accounts:
                 sid = acc.get("server_id")
                 if sid:
@@ -379,17 +390,21 @@ def background_task():
                     if isEnabled:
                         started = start_account_worker(acc)
                         if started:
-                            log(f"⚡ 成功激活账号后台线程: [{acc.get('name', sid)}]", "INFO", sid)
-            
+                            log(
+                                f"⚡ 成功激活账号后台线程: [{acc.get('name', sid)}]",
+                                "INFO",
+                                sid,
+                            )
+
             # 清理已经不存在的账号状态
             with state_lock:
                 to_pop = [sid for sid in account_states if sid not in current_sids]
                 for sid in to_pop:
                     account_states.pop(sid, None)
-                    
+
         except Exception as e:
             log(f"❌ 后台调度循环异常: {e}", "ERROR")
-            
+
         time.sleep(30)
 
 

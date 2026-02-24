@@ -5,9 +5,16 @@ services:
     restart: unless-stopped
     ports:
       - "5000:5000"
+    networks:
+      - leme-net
     volumes:
       # 只需这一行：将本地当前目录映射到容器的数据中心
       - .:/app/data
     environment:
       - TZ=Asia/Shanghai
       - SECRET_KEY=change-this-to-random-string
+      - PROXY_LISTEN=0.0.0.0
+
+networks:
+  leme-net:
+    driver: bridge

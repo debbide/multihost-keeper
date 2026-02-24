@@ -13,6 +13,7 @@ export class ProxyService {
         this.proxyProcess = null;
         this.nodes = [];
         this.projectRoot = process.cwd();
+        this.proxyListen = process.env.PROXY_LISTEN || '127.0.0.1';
 
         // Ensure data directory exists
         if (!fs.existsSync(configDir)) {
@@ -34,8 +35,23 @@ export class ProxyService {
 
     updatePortMap() {
         this.nodePortMap.clear();
+        const usedPorts = new Set();
         this.nodes.forEach((node, index) => {
-            this.nodePortMap.set(node.id, this.basePort + index);
+            let desiredPort = null;
+            if (node && node.local_port !== undefined && node.local_port !== null) {
+                const parsed = parseInt(node.local_port);
+                if (!isNaN(parsed) && parsed > 0) desiredPort = parsed;
+            }
+
+            if (!desiredPort || usedPorts.has(desiredPort)) {
+                desiredPort = this.basePort + index;
+                while (usedPorts.has(desiredPort)) {
+                    desiredPort += 1;
+                }
+            }
+
+            usedPorts.add(desiredPort);
+            this.nodePortMap.set(node.id, desiredPort);
         });
     }
 
@@ -44,11 +60,12 @@ export class ProxyService {
     }
 
     generateConfig() {
+        this.updatePortMap();
         const inbounds = this.nodes.map((node, index) => ({
             type: 'socks',
             tag: `in-${node.id}`,
-            listen: '127.0.0.1',
-            listen_port: this.basePort + index
+            listen: this.proxyListen,
+            listen_port: this.nodePortMap.get(node.id) || (this.basePort + index)
         }));
 
         const outbounds = this.nodes.map(node => {

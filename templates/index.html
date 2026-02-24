@@ -453,7 +453,7 @@
                             暂无代理节点
                         </div>
 
-                        <div v-for="node in proxy.nodes" :key="node.id" class="px-3 py-3 border-t border-white/5">
+                        <div v-for="(node, idx) in proxy.nodes" :key="node.id" class="px-3 py-3 border-t border-white/5">
                             <div class="grid grid-cols-12 gap-2 items-center">
                                 <div class="col-span-2">
                                     <span
@@ -466,6 +466,7 @@
                                         }}</div>
                                     <div class="text-[10px] text-theme-muted truncate">{{ node.server }}:{{ node.port }}
                                     </div>
+                                    <div class="text-[10px] text-theme-muted truncate">本地端口：{{ getNodeLocalPort(node, idx) }}</div>
                                 </div>
                                 <div class="col-span-3 flex flex-wrap gap-1">
                                     <span class="px-2 py-0.5 text-[10px] rounded-full glass text-theme">{{
@@ -482,6 +483,10 @@
                                     <button @click="testProxyNode(node)" :disabled="node.testStatus === 'testing'"
                                         class="px-2 py-1 glass hover:bg-white/10 text-theme text-[10px] rounded transition">
                                         {{ node.testStatus === 'testing' ? '测试中' : '测试' }}
+                                    </button>
+                                    <button @click="updateProxyNodePort(node, idx)"
+                                        class="px-2 py-1 glass hover:bg-white/10 text-theme text-[10px] rounded transition">
+                                        端口
                                     </button>
                                     <button @click="toggleNodeDetails(node)"
                                         class="px-2 py-1 glass hover:bg-white/10 text-theme text-[10px] rounded transition">
@@ -982,6 +987,44 @@
                     return node ? (node.name || node.server || node.id) : '未知'
                 }
 
+                const getNodeLocalPort = (node, idx) => {
+                    if (node && node.local_port) return node.local_port
+                    return 20000 + idx
+                }
+
+                const updateProxyNodePort = async (node, idx) => {
+                    const defaultPort = getNodeLocalPort(node, idx)
+                    const input = window.prompt('设置本地端口(留空恢复默认)：', String(node.local_port || defaultPort))
+                    if (input === null) return
+                    const cleaned = input.trim()
+                    let payload = {}
+                    if (!cleaned) {
+                        payload.local_port = null
+                    } else if (!/^\d+$/.test(cleaned)) {
+                        showToast('端口必须是数字', 'error')
+                        return
+                    } else {
+                        payload.local_port = parseInt(cleaned, 10)
+                    }
+
+                    try {
+                        const res = await fetch(`/api/proxy/nodes/${node.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        })
+                        const data = await res.json()
+                        if (data.success) {
+                            node.local_port = data.node?.local_port || null
+                            showToast('端口已更新', 'success')
+                        } else {
+                            showToast(data.error || '更新失败', 'error')
+                        }
+                    } catch (e) {
+                        showToast('网络错误', 'error')
+                    }
+                }
+
                 const formatCountdown = (seconds) => {
                     if (!seconds || seconds <= 0) return '--:--'
                     const mins = Math.floor(seconds / 60)
@@ -1382,6 +1425,8 @@
                     toggleNodeDetails,
                     formatProxyNode,
                     getProxyName,
+                    getNodeLocalPort,
+                    updateProxyNodePort,
                     formatLog,
                     formatCountdown,
                     formatUptime,

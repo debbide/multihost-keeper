@@ -629,6 +629,40 @@ def delete_proxy_node(node_id):
     return jsonify({"success": True})
 
 
+@app.route("/api/proxy/nodes/<node_id>", methods=["PUT"])
+@login_required
+def update_proxy_node(node_id):
+    data = request.get_json() or {}
+    config = load_proxy_config()
+    nodes = config.get("nodes", [])
+    node = next((n for n in nodes if n.get("id") == node_id), None)
+    if not node:
+        return jsonify({"success": False, "error": "节点不存在"}), 404
+
+    local_port = data.get("local_port", None)
+    if local_port in (None, ""):
+        if "local_port" in node:
+            node.pop("local_port", None)
+    else:
+        try:
+            local_port = int(local_port)
+        except (TypeError, ValueError):
+            return jsonify({"success": False, "error": "端口必须是数字"}), 400
+        if local_port < 1024 or local_port > 65535:
+            return jsonify(
+                {"success": False, "error": "端口范围必须在 1024-65535"}
+            ), 400
+        for other in nodes:
+            if other.get("id") != node_id and other.get("local_port") == local_port:
+                return jsonify({"success": False, "error": "端口已被其他节点占用"}), 400
+        node["local_port"] = local_port
+
+    if not save_proxy_config(config):
+        return jsonify({"success": False, "error": "保存失败"}), 500
+
+    return jsonify({"success": True, "node": node})
+
+
 @app.route("/api/proxy/test", methods=["POST"])
 @login_required
 def test_proxy_node():

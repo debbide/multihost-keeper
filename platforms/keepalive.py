@@ -22,17 +22,17 @@ def process(session, account, log):
 
     # 解析凭证：智能识别 Token 和 Cookie
     credential = account.get("cookie", "").strip()
-    # ✅ 修正为真实的 Chrome 133 版本 (避免 145 被判定为伪造)
+    # ✅ 1:1 像素级还原用户抓包中的 Chrome 142 指纹
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Sec-CH-UA": '"Not(A:Brand";v="99", "Google Chrome";v="133", "Chromium";v="133"',
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36",
+        "Accept": "*/*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Sec-CH-UA": '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
         "Sec-CH-UA-Mobile": "?0",
         "Sec-CH-UA-Platform": '"Windows"',
         "Sec-Fetch-Dest": "empty",
         "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-site",
+        "Sec-Fetch-Site": "same-origin",
         "Connection": "keep-alive"
     }
     
@@ -101,7 +101,8 @@ def process(session, account, log):
         u = heartbeat_url.replace("/heartbeat", "/start") if "altare.sh" in heartbeat_url else heartbeat_url.replace("/heartbeat", "/join")
         try:
             log(f"🚀 发送挂机开始请求: {u.split('/')[-1]}...", "INFO", server_id)
-            resp = session.post(u, headers=headers, json={}, timeout=15, verify=False)
+            # 🛑 核心修复：根据抓包，Body 必须绝对为空 (Content-Length: 0)
+            resp = session.post(u, headers=headers, data=None, timeout=15, verify=False)
             if resp.status_code == 409:
                 log("💡 提示 (409): 会话已激活。请确保已关闭所有 Altare.sh 浏览器标签，否则可能导致锁分。", "WARNING", server_id)
             else:
@@ -147,7 +148,7 @@ def process(session, account, log):
             u = heartbeat_url.replace("/heartbeat", "/start") if "altare.sh" in heartbeat_url else heartbeat_url.replace("/heartbeat", "/join")
             try:
                 log(f"🔄 周期性刷新状态: {u.split('/')[-1]}...", "INFO", server_id)
-                session.post(u, headers=headers, json={}, timeout=15, verify=False)
+                session.post(u, headers=headers, data=None, timeout=15, verify=False)
             except:
                 pass
 
@@ -160,7 +161,8 @@ def process(session, account, log):
 
                 log("❤️ 发送心跳请求...", "INFO", server_id)
                 if "altare.sh" in heartbeat_url:
-                    resp = session.post(heartbeat_url, headers=headers, json={}, timeout=15, verify=False)
+                    # ✅ 同样确保心跳包 Body 为空
+                    resp = session.post(heartbeat_url, headers=headers, data=None, timeout=15, verify=False)
                 else:
                     resp = session.get(heartbeat_url, headers=headers, timeout=15, verify=False)
                 
@@ -174,7 +176,7 @@ def process(session, account, log):
                     log(f"⚠️ 鉴权异常 ({resp.status_code})，尝试紧急重新入场...", "WARNING", server_id)
                     u = heartbeat_url.replace("/heartbeat", "/start") if "altare.sh" in heartbeat_url else heartbeat_url.replace("/heartbeat", "/join")
                     try:
-                        session.post(u, headers=headers, json={}, timeout=10, verify=False)
+                        session.post(u, headers=headers, data=None, timeout=10, verify=False)
                     except:
                         pass
                 else:

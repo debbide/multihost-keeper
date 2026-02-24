@@ -32,13 +32,13 @@
     {
       "type": "tuic",
       "tag": "out-igrmukt",
-      "server": "220.158.18.218",
-      "server_port": 25565,
-      "password": "4ab53087b8dd44c9",
-      "uuid": "28076f2b-a82e-45cd-8db2-02b5513af081",
+      "server": "example.com",
+      "server_port": 443,
+      "password": "REDACTED",
+      "uuid": "REDACTED",
       "tls": {
         "enabled": true,
-        "server_name": "g",
+        "server_name": "example.com",
         "insecure": true,
         "alpn": [
           "h3"
@@ -50,13 +50,13 @@
     {
       "type": "tuic",
       "tag": "out-5xxd9hd",
-      "server": "15.204.51.206",
-      "server_port": 18474,
-      "password": "a5fe38c1fdca4660",
-      "uuid": "82381331-cf73-4806-a0dd-29c0f6f7c4bc",
+      "server": "example.com",
+      "server_port": 443,
+      "password": "REDACTED",
+      "uuid": "REDACTED",
       "tls": {
         "enabled": true,
-        "server_name": "15.204.51.206",
+        "server_name": "example.com",
         "insecure": true,
         "alpn": [
           "h3"
@@ -68,13 +68,13 @@
     {
       "type": "tuic",
       "tag": "out-fglbqtu",
-      "server": "51.38.205.167",
-      "server_port": 24170,
-      "password": "faf6149f6bde4825",
-      "uuid": "0d319334-92a0-4166-b507-d923a17a9680",
+      "server": "example.com",
+      "server_port": 443,
+      "password": "REDACTED",
+      "uuid": "REDACTED",
       "tls": {
         "enabled": true,
-        "server_name": "51.38.205.167",
+        "server_name": "example.com",
         "insecure": true,
         "alpn": [
           "h3"
@@ -86,13 +86,13 @@
     {
       "type": "tuic",
       "tag": "out-uabjq3y",
-      "server": "107.175.228.70",
-      "server_port": 33239,
-      "password": "9143ec94-9e79-4bfa-815c-4c77674341a8",
-      "uuid": "9143ec94-9e79-4bfa-815c-4c77674341a8",
+      "server": "example.com",
+      "server_port": 443,
+      "password": "REDACTED",
+      "uuid": "REDACTED",
       "tls": {
         "enabled": true,
-        "server_name": "www.bing.com",
+        "server_name": "example.com",
         "insecure": true,
         "alpn": [
           "h3"

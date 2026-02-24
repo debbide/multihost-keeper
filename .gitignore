@@ -28,6 +28,13 @@ logs/
 # Local files
 cookies.txt
 run_local.py
+_find_lost_fields.py
+_rebuild.py
+config.json
+index_head.html
+page_source.html
+proxy_nodes.json
+test_*.py
 
 # OS
 .DS_Store

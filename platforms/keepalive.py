@@ -136,7 +136,11 @@ def process(session, account, log):
                     resp = session.get(heartbeat_url, headers=headers, timeout=15, verify=False)
                 
                 if resp.status_code == 200:
-                    log(f"✅ 心跳成功 (200)", "INFO", server_id)
+                    try:
+                        resp_data = resp.json()
+                        log(f"✅ 心跳成功 (200): {json.dumps(resp_data)[:100]}", "INFO", server_id)
+                    except:
+                        log(f"✅ 心跳成功 (200)", "INFO", server_id)
                 elif resp.status_code in [401, 403]:
                     log(f"⚠️ 鉴权异常 ({resp.status_code})，尝试紧急重新入场...", "WARNING", server_id)
                     u = heartbeat_url.replace("/heartbeat", "/start") if "altare.sh" in heartbeat_url else heartbeat_url.replace("/heartbeat", "/join")
@@ -152,9 +156,10 @@ def process(session, account, log):
         else:
             log("✅ 伪装心跳成功", "INFO", server_id)
 
-        if check_url:
+        # 💰 只有在每 5 次心跳时才查询一次余额，避免被封
+        if check_url and loop_count % 5 == 0:
             try:
-                log("💰 查询钱包/详情...", "INFO", server_id)
+                log("💰 周期性查询钱包/详情...", "INFO", server_id)
                 resp = session.get(check_url, headers=headers, timeout=15, verify=False)
                 if resp.status_code == 200:
                     try:

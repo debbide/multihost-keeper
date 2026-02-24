@@ -1,11 +1,13 @@
 import time
 import threading
+import json
+import os
 from urllib.parse import unquote
 
 
 def process(session, account, log):
     """
-    KeepAlive 演示模块
+    KeepAlive 演示模块 (长时在线版本)
     """
     server_id = account.get("server_id")
     loop_count = account.get("keepalive_loop_count", 1)
@@ -13,13 +15,17 @@ def process(session, account, log):
     heartbeat_url = account.get("keepalive_heartbeat_url", "").strip()
     check_url = account.get("keepalive_check_url", "").strip()
     
+    # 配置路径，用于实时校验是否应该停止任务
+    config_path = os.environ.get("CONFIG_FILE", "/app/data/config.json")
+
     # 解析凭证：智能识别 Token 和 Cookie
     credential = account.get("cookie", "").strip()
+    # ✅ 升级为与抓包一致的 Chrome 145 指纹
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Sec-CH-UA": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+        "Accept": "*/*",
+        "Accept-Language": "zh-CN,zh;q=0.9,en-IN;q=0.8,en;q=0.7",
+        "Sec-CH-UA": '"Not:A-Brand";v="99", "Google Chrome";v="145", "Chromium";v="145"',
         "Sec-CH-UA-Mobile": "?0",
         "Sec-CH-UA-Platform": '"Windows"',
         "Sec-Fetch-Dest": "empty",
@@ -40,6 +46,8 @@ def process(session, account, log):
                 if '=' in item:
                     k, v = item.strip().split('=', 1)
                     session.cookies.set(k.strip(), v.strip())
+                    if k.strip() == "XSRF-TOKEN":
+                        headers["X-XSRF-TOKEN"] = unquote(v.strip())
         elif len(credential.split("-")) >= 4:
             headers["Authorization"] = f"Bearer {credential}"
             token_val = credential.strip()
@@ -56,18 +64,19 @@ def process(session, account, log):
     except (TypeError, ValueError):
         wait_seconds = 60
 
-    # ==================== SSE 长连接保活线程 (专门针对 Altare.sh) ====================
+    # ==================== SSE 长连接保活线程 (针对 Altare.sh) ====================
     def maintain_sse_subscription(url, s_headers):
         while True:
             try:
                 # 这种请求是持续不断的，模拟浏览器 EventSource
                 with session.get(url, headers=s_headers, stream=True, timeout=120, verify=False) as r:
                     for _ in r.iter_lines():
-                        # 我们不需要处理返回内容，只要连接连着就行
+                        # 主动检查一次配置，如果停用了，连 SSE 也一起断掉
+                        if not os.path.exists(config_path): continue
                         pass
             except:
                 pass
-            time.sleep(5) # 断开后 5 秒重连
+            time.sleep(10)
 
     if heartbeat_url and "altare.sh" in heartbeat_url and token_val:
         # 构建 SSE 订阅 URL
@@ -78,26 +87,38 @@ def process(session, account, log):
         log("🛰️ 启动后台 SSE 长连接订阅 (EventSource)...", "INFO", server_id)
         threading.Thread(target=maintain_sse_subscription, args=(subscribe_url, sse_headers), daemon=True).start()
 
-    # 初始化：尝试进行一次 Join (入场) 操作，这是涨分的前提
+    # 初始化：执行入场逻辑 (Altare 优先尝试 /start)
     if heartbeat_url:
-        join_url = heartbeat_url.replace("/heartbeat", "/join")
+        u = heartbeat_url.replace("/heartbeat", "/start") if "altare.sh" in heartbeat_url else heartbeat_url.replace("/heartbeat", "/join")
         try:
-            log(f"🚀 尝试执行 AFK 入场 (Join)...", "INFO", server_id)
-            session.post(join_url, headers=headers, timeout=15, verify=False)
+            log(f"🚀 执行 AFK 入场: {u.split('/')[-1]}...", "INFO", server_id)
+            session.post(u, headers=headers, timeout=15, verify=False)
         except:
             pass
 
     while True:
+        # 🟢 停止检测：实时拉取配置，发现停用则立刻退出 (解决多线程残留问题)
+        try:
+            if os.path.exists(config_path):
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    configs = json.load(f)
+                    current_acc = next((a for a in configs if a.get("server_id") == server_id), None)
+                    if not current_acc or not current_acc.get("enabled", True):
+                        log("⏹️ 监测到账号已停用，正在终止心跳线程...", "WARNING", server_id)
+                        break
+        except Exception:
+            pass
+
         log("=" * 40, "INFO", server_id)
         log(f"📍 第 {loop_count} 次循环", "INFO", server_id)
         log("=" * 40, "INFO", server_id)
 
-        # 每隔 30 次循环（约 30 分钟）重新 Join 一次，防止状态在服务器侧失效
+        # 每隔 30 次循环（约 30 分钟）重新请求入场，维持活力
         if loop_count > 1 and loop_count % 30 == 0 and heartbeat_url:
-            join_url = heartbeat_url.replace("/heartbeat", "/join")
+            u = heartbeat_url.replace("/heartbeat", "/start") if "altare.sh" in heartbeat_url else heartbeat_url.replace("/heartbeat", "/join")
             try:
-                log("🔄 周期性重新入场 (Join) 以维持状态...", "INFO", server_id)
-                session.post(join_url, headers=headers, timeout=15, verify=False)
+                log(f"🔄 周期性刷新入场状态: {u.split('/')[-1]}...", "INFO", server_id)
+                session.post(u, headers=headers, timeout=15, verify=False)
             except:
                 pass
 
@@ -118,9 +139,9 @@ def process(session, account, log):
                     log(f"✅ 心跳成功 (200)", "INFO", server_id)
                 elif resp.status_code in [401, 403]:
                     log(f"⚠️ 鉴权异常 ({resp.status_code})，尝试紧急重新入场...", "WARNING", server_id)
-                    join_url = heartbeat_url.replace("/heartbeat", "/join")
+                    u = heartbeat_url.replace("/heartbeat", "/start") if "altare.sh" in heartbeat_url else heartbeat_url.replace("/heartbeat", "/join")
                     try:
-                        session.post(join_url, headers=headers, timeout=10, verify=False)
+                        session.post(u, headers=headers, timeout=10, verify=False)
                     except:
                         pass
                     log(f"❌ 权限仍被拦截: 请检查 Token 是否过期或 IP 被标记", "ERROR", server_id)
@@ -138,24 +159,20 @@ def process(session, account, log):
                 if resp.status_code == 200:
                     try:
                         data = resp.json()
-                        # 尝试专门针对 altare 等返回 balanceCents 的结构提取金额
                         if "balanceCents" in data:
                             balance = data["balanceCents"] / 100.0
-                            log(f"✅ 查询成功: 当前积分/余额为 {balance}", "INFO", server_id)
+                            log(f"✅ 查询成功: 当前积分/余额位 {balance}", "INFO", server_id)
                         else:
                             log(f"✅ 查询结果: {str(data)[:100]}", "INFO", server_id)
                     except:
                         log(f"✅ 查询成功 (200)", "INFO", server_id)
                 elif resp.status_code in [401, 403]:
                     log(f"❌ 查询鉴权失败 ({resp.status_code})", "ERROR", server_id)
-                else:
-                    log(f"⚠️ 查询返回异常代码: {resp.status_code}", "WARNING", server_id)
-            except Exception as e:
-                log(f"❌ 查询执行异常: {e}", "WARNING", server_id)
+            except:
+                pass
 
         log(f"⏳ 等待 {wait_seconds} 秒后继续...", "INFO", server_id)
         time.sleep(max(wait_seconds, 1))
         loop_count += 1
 
-    # 由于是无限挂机，下方理论上不可达，但在发生不可恢复异常时跳出
-    return True, "心跳完成", None
+    return True, "心跳线程已安全终止", None

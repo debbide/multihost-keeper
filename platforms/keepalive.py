@@ -1,4 +1,5 @@
 import time
+import threading
 from urllib.parse import unquote
 
 
@@ -27,9 +28,11 @@ def process(session, account, log):
         "Connection": "keep-alive"
     }
     
+    token_val = ""
     if credential:
         if credential.startswith("Bearer "):
             headers["Authorization"] = credential
+            token_val = credential.split("Bearer ")[1].strip()
         elif "=" in credential:
             headers["Cookie"] = credential
             # 自动将 Cookie 注入 Session 以便后续提取 XSRF-TOKEN
@@ -39,21 +42,41 @@ def process(session, account, log):
                     session.cookies.set(k.strip(), v.strip())
         elif len(credential.split("-")) >= 4:
             headers["Authorization"] = f"Bearer {credential}"
+            token_val = credential.strip()
         else:
             headers["Cookie"] = credential
 
     if heartbeat_url and "altare.sh" in heartbeat_url:
         headers["Origin"] = "https://altare.sh"
         headers["Referer"] = "https://altare.sh/billing/rewards/afk"
-        headers["Sec-Fetch-Site"] = "same-origin" # 修正为抓包中的值
+        headers["Sec-Fetch-Site"] = "same-origin"
 
     try:
         wait_seconds = int(wait_seconds)
     except (TypeError, ValueError):
         wait_seconds = 60
 
-    # 循环计数器，因为我们在单次调度内执行死循环挂机
-    # loop_count = 1 # This line was removed as per instruction
+    # ==================== SSE 长连接保活线程 (专门针对 Altare.sh) ====================
+    def maintain_sse_subscription(url, s_headers):
+        while True:
+            try:
+                # 这种请求是持续不断的，模拟浏览器 EventSource
+                with session.get(url, headers=s_headers, stream=True, timeout=120, verify=False) as r:
+                    for _ in r.iter_lines():
+                        # 我们不需要处理返回内容，只要连接连着就行
+                        pass
+            except:
+                pass
+            time.sleep(5) # 断开后 5 秒重连
+
+    if heartbeat_url and "altare.sh" in heartbeat_url and token_val:
+        # 构建 SSE 订阅 URL
+        subscribe_url = f"https://altare.sh/api/core/updates/subscribe?token={token_val}"
+        sse_headers = headers.copy()
+        sse_headers["Accept"] = "text/event-stream"
+        sse_headers.pop("Content-Type", None)
+        log("🛰️ 启动后台 SSE 长连接订阅 (EventSource)...", "INFO", server_id)
+        threading.Thread(target=maintain_sse_subscription, args=(subscribe_url, sse_headers), daemon=True).start()
 
     # 初始化：尝试进行一次 Join (入场) 操作，这是涨分的前提
     if heartbeat_url:
@@ -80,7 +103,7 @@ def process(session, account, log):
 
         if heartbeat_url:
             try:
-                # 自动关联 XSRF 令牌 (从刚才注入或上一轮返回的 Cookie 中提取)
+                # 自动关联 XSRF 令牌
                 for k, v in session.cookies.items():
                     if k == "XSRF-TOKEN":
                         headers["X-XSRF-TOKEN"] = unquote(v)
@@ -95,7 +118,6 @@ def process(session, account, log):
                     log(f"✅ 心跳成功 (200)", "INFO", server_id)
                 elif resp.status_code in [401, 403]:
                     log(f"⚠️ 鉴权异常 ({resp.status_code})，尝试紧急重新入场...", "WARNING", server_id)
-                    # 遇到 401/403 尝试紧急 Join 一次
                     join_url = heartbeat_url.replace("/heartbeat", "/join")
                     try:
                         session.post(join_url, headers=headers, timeout=10, verify=False)
@@ -106,7 +128,6 @@ def process(session, account, log):
                     log(f"⚠️ 心跳异常 ({resp.status_code})", "WARNING", server_id)
             except Exception as e:
                 log(f"❌ 心跳网络异常: {e}", "ERROR", server_id)
-                # 心跳失败时不立刻退出，而是等待下一轮重试
         else:
             log("✅ 伪装心跳成功", "INFO", server_id)
 

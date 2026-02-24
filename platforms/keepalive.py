@@ -81,9 +81,10 @@ def process(session, account, log):
         log("🛰️ 准备建立 SSE 长连接订阅 (EventSource)...", "INFO", server_id)
         while True:
             try:
-                # 注入当前最新的 Cookies 并动态更新 XSRF-TOKEN (修复关键缺失)
+                # 注入当前最新的 Cookies
                 c_str = "; ".join([f"{k}={v}" for k, v in current_cookies.items()])
                 s_headers["Cookie"] = c_str
+                # 同步最新的 XSRF
                 for k, v in current_cookies.items():
                     if k == "XSRF-TOKEN":
                         s_headers["X-XSRF-TOKEN"] = unquote(v)
@@ -92,19 +93,23 @@ def process(session, account, log):
                     if r.status_code == 200:
                         log("✅ SSE 订阅成功：在线状态维持中...", "INFO", server_id)
                         
-                        # 【核心补丁：会话绑定】在 SSE 建立后，必须发送 attach 请求
+                        # 【核心修复：对齐真正的 attach 路径】
                         if tenant_id and "altare.sh" in heartbeat_url:
                             try:
-                                base_path = heartbeat_url.split("/heartbeat")[0]
-                                attach_url = f"{base_path}/attach?tenantId={tenant_id}"
-                                log("🔗 尝试发送会话绑定请求 (attach)...", "INFO", server_id)
-                                a_resp = requests.post(attach_url, headers=s_headers, data=None, timeout=10, verify=False)
+                                # 🛑 重要：根据 F12 抓包，attach 属于核心网关中的 updates 模块
+                                a_url = f"https://altare.sh/api/core/updates/attach?tenantId={tenant_id}"
+                                log(f"🔗 计分链路绑定: updates/attach (ID: {tenant_id[:8]}...)", "INFO", server_id)
+                                
+                                # 将 tenant_id 补全到请求头
+                                s_headers["X-Tenant-Id"] = tenant_id
+                                a_resp = requests.post(a_url, headers=s_headers, data=None, timeout=10, verify=False)
+                                
                                 if a_resp.status_code in [200, 201, 204]:
-                                    log(f"🔗 attach 成功 ({a_resp.status_code})：计分系统已锁定。", "INFO", server_id)
+                                    log(f"🔗 会话绑定成功 ({a_resp.status_code})：计分已激活。", "INFO", server_id)
                                 else:
-                                    log(f"⚠️ attach 响应异常 ({a_resp.status_code}): {a_resp.text[:50]}", "WARNING", server_id)
+                                    log(f"⚠️ 绑定结果异常 ({a_resp.status_code})", "WARNING", server_id)
                             except Exception as e:
-                                log(f"❌ attach 网络错误: {e}", "ERROR", server_id)
+                                log(f"❌ attach 错误: {e}", "ERROR", server_id)
                         
                         for _ in r.iter_lines():
                             if not os.path.exists(config_path): break
@@ -114,35 +119,33 @@ def process(session, account, log):
                 pass
             time.sleep(15)
 
-    # 初始化逻辑：调整顺序 (先 Start 再 SSE)
+    # 1. 发送激活请求 (如果 409 则说明已经激活，正常)
     if heartbeat_url:
         u = heartbeat_url.replace("/heartbeat", "/start") if "altare.sh" in heartbeat_url else heartbeat_url.replace("/heartbeat", "/join")
         try:
             log(f"🚀 发送状态激活请求: {u.split('/')[-1]}...", "INFO", server_id)
+            # Body 必须为空 (Content-Length: 0)
             resp = session.post(u, headers=headers, data=None, timeout=15, verify=False)
             if resp.status_code == 409:
-                log("✨ 服务器反馈：AFK 计分线程已在运行 (409 正常状态)", "INFO", server_id)
+                log("✨ 状态确认：服务器显示该账号已处于 AFK 计分状态 (409)", "INFO", server_id)
             else:
-                try:
-                    res_json = resp.json()
-                    log(f"💡 激活成功 ({resp.status_code}): {json.dumps(res_json)[:100]}", "INFO", server_id)
-                except:
-                    log(f"💡 激活结果 ({resp.status_code}): {resp.text[:50]}", "INFO", server_id)
+                log(f"💡 激活完成 ({resp.status_code})", "INFO", server_id)
         except Exception as e:
-            log(f"⚠️ 激活请求异常: {e}", "WARNING", server_id)
+            log(f"⚠️ 激活异常: {e}", "WARNING", server_id)
 
-    # 启动 SSE (在 Start 之后启动，并由内部触发 attach 绑定)
+    # 2. 启动异步 SSE 线程 (必须使用 args 且不能带括号，否则会阻塞主线程)
     if heartbeat_url and "altare.sh" in heartbeat_url and token_val:
-        subscribe_url = f"https://altare.sh/api/core/updates/subscribe?token={token_val}"
-        if tenant_id:
-            subscribe_url += f"&tenant={tenant_id}"
-             
-        sse_headers = headers.copy()
-        sse_headers["Accept"] = "text/event-stream"
-        sse_headers.pop("Content-Type", None)
-        sse_headers["Cache-Control"] = "no-cache"
-        threading.Thread(target=maintain_sse_subscription, args=(subscribe_url, sse_headers, session.cookies), daemon=True).start()
+        sub_url = f"https://altare.sh/api/core/updates/subscribe?token={token_val}"
+        if tenant_id: sub_url += f"&tenant={tenant_id}"
+        
+        sse_h = headers.copy()
+        sse_h["Accept"] = "text/event-stream"
+        sse_h.pop("Content-Type", None)
+        sse_h["Cache-Control"] = "no-cache"
+        # ✅ 正确启动
+        threading.Thread(target=maintain_sse_subscription, args=(sub_url, sse_h, session.cookies), daemon=True).start()
 
+    # 3. 主循环心跳
     while True:
         # 🟢 停止检测
         try:
@@ -160,64 +163,61 @@ def process(session, account, log):
         log(f"📍 第 {loop_count} 次循环", "INFO", server_id)
         log("=" * 40, "INFO", server_id)
 
+        # 每 30 次心跳请求一次 /start 确保状态不过期
         if loop_count > 1 and loop_count % 30 == 0 and heartbeat_url:
             u = heartbeat_url.replace("/heartbeat", "/start") if "altare.sh" in heartbeat_url else heartbeat_url.replace("/heartbeat", "/join")
             try:
-                log(f"🔄 周期性刷新状态: {u.split('/')[-1]}...", "INFO", server_id)
                 session.post(u, headers=headers, data=None, timeout=15, verify=False)
             except:
                 pass
 
         if heartbeat_url:
             try:
-                # 重新同步 XSRF 令牌
+                # 重新同步 XSRF 
                 for k, v in session.cookies.items():
                     if k == "XSRF-TOKEN":
                         headers["X-XSRF-TOKEN"] = unquote(v)
 
                 log("❤️ 发送心跳请求...", "INFO", server_id)
                 if "altare.sh" in heartbeat_url:
+                    # 必须使用 data=None 实现 Content-Length: 0
                     resp = session.post(heartbeat_url, headers=headers, data=None, timeout=15, verify=False)
                 else:
                     resp = session.get(heartbeat_url, headers=headers, timeout=15, verify=False)
                 
                 if resp.status_code == 200:
-                    try:
-                        resp_data = resp.json()
-                        log(f"✅ 心跳成功 (200): {json.dumps(resp_data)[:100]}", "INFO", server_id)
-                    except:
-                        log(f"✅ 心跳成功 (200)", "INFO", server_id)
+                    log(f"✅ 心跳成功 (200)", "INFO", server_id)
                 elif resp.status_code in [401, 403]:
-                    log(f"⚠️ 鉴权异常 ({resp.status_code})，尝试紧急重新入场...", "WARNING", server_id)
+                    log(f"⚠️ 鉴权失效 ({resp.status_code})，尝试重连...", "WARNING", server_id)
                     u = heartbeat_url.replace("/heartbeat", "/start") if "altare.sh" in heartbeat_url else heartbeat_url.replace("/heartbeat", "/join")
                     try:
                         session.post(u, headers=headers, data=None, timeout=10, verify=False)
                     except:
                         pass
                 else:
-                    log(f"⚠️ 心跳异常 ({resp.status_code}) {resp.text[:50]}", "WARNING", server_id)
+                    log(f"⚠️ 心跳异常 ({resp.status_code})", "WARNING", server_id)
             except Exception as e:
-                log(f"❌ 心跳网络异常: {e}", "ERROR", server_id)
+                log(f"❌ 网络异常: {e}", "ERROR", server_id)
         else:
-            log("✅ 伪装心跳成功", "INFO", server_id)
+            log("✅ 模拟心跳成功", "INFO", server_id)
 
-        # 💰 积分刷新：提高查询频率到每 5 次查一次，方便测试观测
+        # 💰 关键项：积分余额显回 (每 5 次查一次)
         if check_url and (loop_count == 1 or loop_count % 5 == 0):
             try:
-                log("💰 周期性查询积分...", "INFO", server_id)
+                log("💰 正在同步积分余额...", "INFO", server_id)
                 resp = session.get(check_url, headers=headers, timeout=15, verify=False)
                 if resp.status_code == 200:
                     try:
                         data = resp.json()
                         if "balanceCents" in data:
                             balance = data["balanceCents"] / 100.0
-                            log(f"✅ 查询成功: 当前积分/余额 {balance}", "INFO", server_id)
+                            log(f"✅ 查询成功: 当前积分/余额 【 {balance} 】", "INFO", server_id)
                         else:
                             log(f"✅ 查询结果: {str(data)[:100]}", "INFO", server_id)
                     except:
                         log(f"✅ 查询成功 (200)", "INFO", server_id)
                 elif resp.status_code in [401, 403]:
-                    log(f"❌ 查询鉴权失败 ({resp.status_code})", "ERROR", server_id)
+                    log(f"❌ 查分鉴权失败 ({resp.status_code})", "ERROR", server_id)
             except:
                 pass
 

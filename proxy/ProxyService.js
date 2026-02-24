@@ -60,15 +60,33 @@ export class ProxyService {
     }
 
     generateConfig() {
+        const uuidRequired = new Set(['vmess', 'vless', 'tuic']);
+        const isValidUuid = (value) => typeof value === 'string'
+            && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(value);
+
+        const validNodes = (this.nodes || []).filter((node) => {
+            if (!node) return false;
+            if (uuidRequired.has(node.type)) {
+                const uuid = node.uuid || '';
+                if (!isValidUuid(uuid)) {
+                    const label = node.name || node.id || node.type;
+                    console.error(`[ProxyService] Skipping node ${label}: invalid uuid "${uuid}"`);
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        this.nodes = validNodes;
         this.updatePortMap();
-        const inbounds = this.nodes.map((node, index) => ({
+        const inbounds = validNodes.map((node, index) => ({
             type: 'socks',
             tag: `in-${node.id}`,
             listen: this.proxyListen,
             listen_port: this.nodePortMap.get(node.id) || (this.basePort + index)
         }));
 
-        const outbounds = this.nodes.map(node => {
+        const outbounds = validNodes.map(node => {
             const outbound = {
                 type: node.type,
                 tag: `out-${node.id}`,
@@ -211,7 +229,7 @@ export class ProxyService {
                     ip_is_private: true,
                     outbound: 'direct'
                 },
-                ...this.nodes.map(node => ({
+                ...validNodes.map(node => ({
                     inbound: [`in-${node.id}`],
                     outbound: `out-${node.id}`
                 }))

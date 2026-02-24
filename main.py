@@ -365,20 +365,31 @@ def background_task():
     log("模块化续期服务已启动")
     log("=" * 30)
     load_state()
-    known = set()
+    # 移除 known 逻辑，改用“实时存活检测”启动策略
     while True:
-        accounts = load_config()
-        current = {acc.get("server_id") for acc in accounts if acc.get("server_id")}
-        for acc in accounts:
-            sid = acc.get("server_id")
-            if sid and sid not in known:
-                if acc.get("enabled", True):
-                    start_account_worker(acc)
-                known.add(sid)
-        for sid in known - current:
-            known.discard(sid)
+        try:
+            accounts = load_config()
+            current_sids = {acc.get("server_id") for acc in accounts if acc.get("server_id")}
+            
+            for acc in accounts:
+                sid = acc.get("server_id")
+                if sid:
+                    isEnabled = acc.get("enabled", True)
+                    # 如果账号启用，且线程没在跑，则尝试启动
+                    if isEnabled:
+                        started = start_account_worker(acc)
+                        if started:
+                            log(f"⚡ 成功激活账号后台线程: [{acc.get('name', sid)}]", "INFO", sid)
+            
+            # 清理已经不存在的账号状态
             with state_lock:
-                account_states.pop(sid, None)
+                to_pop = [sid for sid in account_states if sid not in current_sids]
+                for sid in to_pop:
+                    account_states.pop(sid, None)
+                    
+        except Exception as e:
+            log(f"❌ 后台调度循环异常: {e}", "ERROR")
+            
         time.sleep(30)
 
 

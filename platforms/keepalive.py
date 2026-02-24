@@ -171,8 +171,8 @@ def process(session, account, log):
         else:
             log("✅ 伪装心跳成功", "INFO", server_id)
 
-        # 💰 只有在每 5 次心跳时才查询一次余额，避免被封
-        if check_url and loop_count % 5 == 0:
+        # 💰 初始化(第1次)以及之后每 5 次心跳查询一次余额，避免被封
+        if check_url and (loop_count == 1 or loop_count % 5 == 0):
             try:
                 log("💰 周期性查询钱包/详情...", "INFO", server_id)
                 resp = session.get(check_url, headers=headers, timeout=15, verify=False)

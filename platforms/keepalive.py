@@ -115,42 +115,6 @@ def process(session, account, log):
                         log("✅ SSE 订阅成功：在线状态维持中...", "INFO", server_id)
                         backoff_seconds = 5
 
-                        # 【核心修复：对齐真正的 attach 路径】
-                        if tenant_id and "altare.sh" in heartbeat_url:
-                            try:
-                                # 🛑 重要：根据 F12 抓包，attach 属于核心网关中的 updates 模块
-                                a_url = f"https://altare.sh/api/core/updates/attach?tenantId={tenant_id}"
-                                log(
-                                    f"🔗 计分链路绑定: updates/attach (ID: {tenant_id[:8]}...)",
-                                    "INFO",
-                                    server_id,
-                                )
-
-                                # 将 tenant_id 补全到请求头
-                                s_headers["X-Tenant-Id"] = tenant_id
-                                a_resp = requests.post(
-                                    a_url,
-                                    headers=s_headers,
-                                    data=None,
-                                    timeout=10,
-                                    verify=False,
-                                )
-
-                                if a_resp.status_code in [200, 201, 204]:
-                                    log(
-                                        f"🔗 会话绑定成功 ({a_resp.status_code})：计分已激活。",
-                                        "INFO",
-                                        server_id,
-                                    )
-                                else:
-                                    log(
-                                        f"⚠️ 绑定结果异常 ({a_resp.status_code})",
-                                        "WARNING",
-                                        server_id,
-                                    )
-                            except Exception as e:
-                                log(f"❌ attach 错误: {e}", "ERROR", server_id)
-
                         for _ in r.iter_lines():
                             if not is_account_active():
                                 break
@@ -295,15 +259,48 @@ def process(session, account, log):
                 if resp.status_code == 200:
                     try:
                         data = resp.json()
-                        if "balanceCents" in data:
-                            balance = data["balanceCents"] / 100.0
+                        balance = None
+                        if isinstance(data, dict):
+                            if "balanceCents" in data:
+                                try:
+                                    balance = float(data["balanceCents"]) / 100.0
+                                except (TypeError, ValueError):
+                                    balance = None
+                            elif "balance" in data:
+                                try:
+                                    balance = float(data["balance"])
+                                except (TypeError, ValueError):
+                                    balance = None
+                            elif "credits" in data:
+                                try:
+                                    balance = float(data["credits"])
+                                except (TypeError, ValueError):
+                                    balance = None
+                            elif "points" in data:
+                                try:
+                                    balance = float(data["points"])
+                                except (TypeError, ValueError):
+                                    balance = None
+                            elif "data" in data and isinstance(data["data"], dict):
+                                inner = data["data"]
+                                if "balanceCents" in inner:
+                                    try:
+                                        balance = float(inner["balanceCents"]) / 100.0
+                                    except (TypeError, ValueError):
+                                        balance = None
+                                elif "balance" in inner:
+                                    try:
+                                        balance = float(inner["balance"])
+                                    except (TypeError, ValueError):
+                                        balance = None
+                        if balance is not None:
                             log(
                                 f"✅ 查询成功: 当前积分/余额 【 {balance} 】",
                                 "INFO",
                                 server_id,
                             )
                         else:
-                            log(f"✅ 查询结果: {str(data)[:100]}", "INFO", server_id)
+                            log(f"✅ 查询结果: {str(data)[:200]}", "INFO", server_id)
                     except:
                         log(f"✅ 查询成功 (200)", "INFO", server_id)
                 elif resp.status_code in [401, 403]:

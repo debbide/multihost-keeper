@@ -21,12 +21,12 @@ def process(session, account, log):
 
     # 解析凭证：智能识别 Token 和 Cookie
     credential = account.get("cookie", "").strip()
-    # ✅ 升级为与抓包一致的 Chrome 145 指纹
+    # ✅ 修正为真实的 Chrome 133 版本 (避免 145 被判定为伪造)
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
-        "Accept": "*/*",
-        "Accept-Language": "zh-CN,zh;q=0.9,en-IN;q=0.8,en;q=0.7",
-        "Sec-CH-UA": '"Not:A-Brand";v="99", "Google Chrome";v="145", "Chromium";v="145"',
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Sec-CH-UA": '"Not(A:Brand";v="99", "Google Chrome";v="133", "Chromium";v="133"',
         "Sec-CH-UA-Mobile": "?0",
         "Sec-CH-UA-Platform": '"Windows"',
         "Sec-Fetch-Dest": "empty",
@@ -63,15 +63,13 @@ def process(session, account, log):
         headers["Referer"] = "https://altare.sh/billing/rewards/afk"
         headers["Sec-Fetch-Site"] = "same-origin"
         
-        # 尝试从 URL 或 account 配置中获取 tenant_id
+        # 尝试由 URL 探测 tenant_id
         import re
         match = re.search(r'tenants/([a-z0-9-]+)', heartbeat_url)
         if match:
             tenant_id = match.group(1)
             headers["X-Tenant-Id"] = tenant_id
             log(f"🔎 探测到 X-Tenant-Id: {tenant_id[:10]}***", "INFO", server_id)
-        else:
-            log("⚠️ 未能从 URL 探测到 Tenant ID，可能会影响收分", "WARNING", server_id)
 
     try:
         wait_seconds = int(wait_seconds)
@@ -79,26 +77,39 @@ def process(session, account, log):
         wait_seconds = 60
 
     # ==================== SSE 长连接保活线程 (同步 Tenant 信息) ====================
-    def maintain_sse_subscription(url, s_headers):
+    def maintain_sse_subscription(url, s_headers, current_cookies):
         log("🛰️ 准备建立 SSE 长连接订阅 (EventSource)...", "INFO", server_id)
-        retry_count = 0
         while True:
             try:
-                # 使用独立的连接，避免 Session 并发干扰
+                # 注入当前最新的 Cookies
+                c_str = "; ".join([f"{k}={v}" for k, v in current_cookies.items()])
+                s_headers["Cookie"] = c_str
                 with requests.get(url, headers=s_headers, stream=True, timeout=120, verify=False) as r:
                     if r.status_code == 200:
                         log("✅ SSE 订阅成功：在线状态维持中...", "INFO", server_id)
                         for _ in r.iter_lines():
                             if not os.path.exists(config_path): break
                     else:
-                        log(f"⚠️ SSE 订阅返回错误 ({r.status_code})", "WARNING", server_id)
-            except Exception as e:
+                        log(f"⚠️ SSE 订阅返回异常 ({r.status_code})", "WARNING", server_id)
+            except:
                 pass
-            retry_count += 1
-            time.sleep(10)
+            time.sleep(15)
 
+    # 初始化逻辑：调整顺序 (先 Start 再 SSE)
+    if heartbeat_url:
+        u = heartbeat_url.replace("/heartbeat", "/start") if "altare.sh" in heartbeat_url else heartbeat_url.replace("/heartbeat", "/join")
+        try:
+            log(f"🚀 发送挂机开始请求: {u.split('/')[-1]}...", "INFO", server_id)
+            resp = session.post(u, headers=headers, json={}, timeout=15, verify=False)
+            if resp.status_code == 409:
+                log("💡 提示 (409): 会话已激活。请确保已关闭所有 Altare.sh 浏览器标签，否则可能导致锁分。", "WARNING", server_id)
+            else:
+                log(f"💡 请求结果 ({resp.status_code}): {json.dumps(resp.json()) if resp.status_code==200 else resp.text[:50]}", "INFO", server_id)
+        except Exception as e:
+            log(f"⚠️ 开始请求异常: {e}", "WARNING", server_id)
+
+    # 启动 SSE (在 Start 之后启动，避免竞争)
     if heartbeat_url and "altare.sh" in heartbeat_url and token_val:
-        # 构建完全对齐抓包的 SSE 订阅 URL
         subscribe_url = f"https://altare.sh/api/core/updates/subscribe?token={token_val}"
         if tenant_id:
             subscribe_url += f"&tenant={tenant_id}"
@@ -106,20 +117,9 @@ def process(session, account, log):
         sse_headers = headers.copy()
         sse_headers["Accept"] = "text/event-stream"
         sse_headers.pop("Content-Type", None)
-        # 为长连接添加缓存控制头
         sse_headers["Cache-Control"] = "no-cache"
-        threading.Thread(target=maintain_sse_subscription, args=(subscribe_url, sse_headers), daemon=True).start()
-
-    # 初始化：执行入场逻辑
-    if heartbeat_url:
-        u = heartbeat_url.replace("/heartbeat", "/start") if "altare.sh" in heartbeat_url else heartbeat_url.replace("/heartbeat", "/join")
-        try:
-            log(f"🚀 发送挂机开始请求: {u.split('/')[-1]}...", "INFO", server_id)
-            # Altare POST 请求通常需要一个空 Body {}
-            resp = session.post(u, headers=headers, json={}, timeout=15, verify=False)
-            log(f"💡 开始请求返回 ({resp.status_code}): {json.dumps(resp.json()) if resp.status_code==200 else resp.text[:50]}", "INFO", server_id)
-        except Exception as e:
-            log(f"⚠️ 开始请求异常: {e}", "WARNING", server_id)
+        # 传入 session.cookies 以便实时同步
+        threading.Thread(target=maintain_sse_subscription, args=(subscribe_url, sse_headers, session.cookies), daemon=True).start()
 
     while True:
         # 🟢 停止检测
@@ -148,7 +148,7 @@ def process(session, account, log):
 
         if heartbeat_url:
             try:
-                # 重新校验并关联 XSRF
+                # 重新同步 XSRF
                 for k, v in session.cookies.items():
                     if k == "XSRF-TOKEN":
                         headers["X-XSRF-TOKEN"] = unquote(v)
@@ -179,7 +179,7 @@ def process(session, account, log):
         else:
             log("✅ 伪装心跳成功", "INFO", server_id)
 
-        # 💰 初始化(第1次)以及之后每 5 次心跳查询一次
+        # 💰 初始化以及之后每 5 次心跳查询一次
         if check_url and (loop_count == 1 or loop_count % 5 == 0):
             try:
                 log("💰 周期性查询积分...", "INFO", server_id)
@@ -198,6 +198,12 @@ def process(session, account, log):
                     log(f"❌ 查询鉴权失败 ({resp.status_code})", "ERROR", server_id)
             except:
                 pass
+
+        log(f"⏳ 等待 {wait_seconds} 秒后继续...", "INFO", server_id)
+        time.sleep(max(wait_seconds, 1))
+        loop_count += 1
+
+    return True, "心跳线程已安全终止", None
 
         log(f"⏳ 等待 {wait_seconds} 秒后继续...", "INFO", server_id)
         time.sleep(max(wait_seconds, 1))

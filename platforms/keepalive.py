@@ -65,6 +65,7 @@ def process(session, account, log):
         headers["Referer"] = "https://altare.sh/billing/rewards/afk"
         
         # 尝试由 URL 探测 tenant_id
+        import re
         match = re.search(r'tenants/([a-z0-9-]+)', heartbeat_url)
         if match:
             tenant_id = match.group(1)
@@ -80,10 +81,13 @@ def process(session, account, log):
         log("🛰️ 准备建立 SSE 长连接订阅 (EventSource)...", "INFO", server_id)
         while True:
             try:
-                # 注入当前最新的 Cookies
+                # 注入当前最新的 Cookies 并动态更新 XSRF-TOKEN (修复关键缺失)
                 c_str = "; ".join([f"{k}={v}" for k, v in current_cookies.items()])
                 s_headers["Cookie"] = c_str
-                # 保持 Chrome 142 身份
+                for k, v in current_cookies.items():
+                    if k == "XSRF-TOKEN":
+                        s_headers["X-XSRF-TOKEN"] = unquote(v)
+
                 with requests.get(url, headers=s_headers, stream=True, timeout=120, verify=False) as r:
                     if r.status_code == 200:
                         log("✅ SSE 订阅成功：在线状态维持中...", "INFO", server_id)
@@ -91,13 +95,16 @@ def process(session, account, log):
                         # 【核心补丁：会话绑定】在 SSE 建立后，必须发送 attach 请求
                         if tenant_id and "altare.sh" in heartbeat_url:
                             try:
-                                # 修正 attach URL 构造方式
                                 base_path = heartbeat_url.split("/heartbeat")[0]
                                 attach_url = f"{base_path}/attach?tenantId={tenant_id}"
-                                log("🔗 发送会话绑定请求 (attach)...", "INFO", server_id)
-                                requests.post(attach_url, headers=s_headers, data=None, timeout=10, verify=False)
-                            except:
-                                pass
+                                log("🔗 尝试发送会话绑定请求 (attach)...", "INFO", server_id)
+                                a_resp = requests.post(attach_url, headers=s_headers, data=None, timeout=10, verify=False)
+                                if a_resp.status_code in [200, 201, 204]:
+                                    log(f"🔗 attach 成功 ({a_resp.status_code})：计分系统已锁定。", "INFO", server_id)
+                                else:
+                                    log(f"⚠️ attach 响应异常 ({a_resp.status_code}): {a_resp.text[:50]}", "WARNING", server_id)
+                            except Exception as e:
+                                log(f"❌ attach 网络错误: {e}", "ERROR", server_id)
                         
                         for _ in r.iter_lines():
                             if not os.path.exists(config_path): break
@@ -112,7 +119,6 @@ def process(session, account, log):
         u = heartbeat_url.replace("/heartbeat", "/start") if "altare.sh" in heartbeat_url else heartbeat_url.replace("/heartbeat", "/join")
         try:
             log(f"🚀 发送状态激活请求: {u.split('/')[-1]}...", "INFO", server_id)
-            # 🛑 核心修复：根据抓包，Body 必须绝对为空 (Content-Length: 0)
             resp = session.post(u, headers=headers, data=None, timeout=15, verify=False)
             if resp.status_code == 409:
                 log("✨ 服务器反馈：AFK 计分线程已在运行 (409 正常状态)", "INFO", server_id)
@@ -171,7 +177,6 @@ def process(session, account, log):
 
                 log("❤️ 发送心跳请求...", "INFO", server_id)
                 if "altare.sh" in heartbeat_url:
-                    # 🛑 核心修复：确保心跳 Body 同样为空
                     resp = session.post(heartbeat_url, headers=headers, data=None, timeout=15, verify=False)
                 else:
                     resp = session.get(heartbeat_url, headers=headers, timeout=15, verify=False)
@@ -196,8 +201,8 @@ def process(session, account, log):
         else:
             log("✅ 伪装心跳成功", "INFO", server_id)
 
-        # 💰 积分查询逻辑 (每 10 次查一次，降低压力)
-        if check_url and (loop_count == 1 or loop_count % 10 == 0):
+        # 💰 积分刷新：提高查询频率到每 5 次查一次，方便测试观测
+        if check_url and (loop_count == 1 or loop_count % 5 == 0):
             try:
                 log("💰 周期性查询积分...", "INFO", server_id)
                 resp = session.get(check_url, headers=headers, timeout=15, verify=False)

@@ -650,6 +650,12 @@ def apply_proxy_runtime():
 
 # ==================== 启动 ====================
 if __name__ == "__main__":
+    import logging
+
+    # ✅ 静音 Flask/Werkzeug 的默认 HTTP 访问日志，让控制台清爽
+    log_werk = logging.getLogger("werkzeug")
+    log_werk.setLevel(logging.ERROR)
+
     apply_proxy_config()
     start_background_task()
     app.run(host="0.0.0.0", port=5000, debug=False)

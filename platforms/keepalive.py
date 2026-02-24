@@ -3,6 +3,7 @@ import threading
 import json
 import os
 import requests
+import re
 from urllib.parse import unquote
 
 
@@ -64,7 +65,6 @@ def process(session, account, log):
         headers["Sec-Fetch-Site"] = "same-origin"
         
         # 尝试由 URL 探测 tenant_id
-        import re
         match = re.search(r'tenants/([a-z0-9-]+)', heartbeat_url)
         if match:
             tenant_id = match.group(1)
@@ -84,6 +84,7 @@ def process(session, account, log):
                 # 注入当前最新的 Cookies
                 c_str = "; ".join([f"{k}={v}" for k, v in current_cookies.items()])
                 s_headers["Cookie"] = c_str
+                # 使用独立的请求以防止主 Session 被阻塞
                 with requests.get(url, headers=s_headers, stream=True, timeout=120, verify=False) as r:
                     if r.status_code == 200:
                         log("✅ SSE 订阅成功：在线状态维持中...", "INFO", server_id)
@@ -104,7 +105,11 @@ def process(session, account, log):
             if resp.status_code == 409:
                 log("💡 提示 (409): 会话已激活。请确保已关闭所有 Altare.sh 浏览器标签，否则可能导致锁分。", "WARNING", server_id)
             else:
-                log(f"💡 请求结果 ({resp.status_code}): {json.dumps(resp.json()) if resp.status_code==200 else resp.text[:50]}", "INFO", server_id)
+                try:
+                    res_json = resp.json()
+                    log(f"💡 请求结果 ({resp.status_code}): {json.dumps(res_json)[:100]}", "INFO", server_id)
+                except:
+                    log(f"💡 请求结果 ({resp.status_code}): {resp.text[:50]}", "INFO", server_id)
         except Exception as e:
             log(f"⚠️ 开始请求异常: {e}", "WARNING", server_id)
 
@@ -173,7 +178,7 @@ def process(session, account, log):
                     except:
                         pass
                 else:
-                    log(f"⚠️ 心跳异常 ({resp.status_code})", "WARNING", server_id)
+                    log(f"⚠️ 心跳异常 ({resp.status_code}) {resp.text[:50]}", "WARNING", server_id)
             except Exception as e:
                 log(f"❌ 心跳网络异常: {e}", "ERROR", server_id)
         else:
@@ -198,12 +203,6 @@ def process(session, account, log):
                     log(f"❌ 查询鉴权失败 ({resp.status_code})", "ERROR", server_id)
             except:
                 pass
-
-        log(f"⏳ 等待 {wait_seconds} 秒后继续...", "INFO", server_id)
-        time.sleep(max(wait_seconds, 1))
-        loop_count += 1
-
-    return True, "心跳线程已安全终止", None
 
         log(f"⏳ 等待 {wait_seconds} 秒后继续...", "INFO", server_id)
         time.sleep(max(wait_seconds, 1))

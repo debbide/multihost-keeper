@@ -55,10 +55,28 @@ def process(session, account, log):
     # 循环计数器，因为我们在单次调度内执行死循环挂机
     # loop_count = 1 # This line was removed as per instruction
 
+    # 初始化：尝试进行一次 Join (入场) 操作，这是涨分的前提
+    if heartbeat_url:
+        join_url = heartbeat_url.replace("/heartbeat", "/join")
+        try:
+            log(f"🚀 尝试执行 AFK 入场 (Join)...", "INFO", server_id)
+            session.post(join_url, headers=headers, timeout=15, verify=False)
+        except:
+            pass
+
     while True:
         log("=" * 40, "INFO", server_id)
         log(f"📍 第 {loop_count} 次循环", "INFO", server_id)
         log("=" * 40, "INFO", server_id)
+
+        # 每隔 30 次循环（约 30 分钟）重新 Join 一次，防止状态在服务器侧失效
+        if loop_count > 1 and loop_count % 30 == 0 and heartbeat_url:
+            join_url = heartbeat_url.replace("/heartbeat", "/join")
+            try:
+                log("🔄 周期性重新入场 (Join) 以维持状态...", "INFO", server_id)
+                session.post(join_url, headers=headers, timeout=15, verify=False)
+            except:
+                pass
 
         if heartbeat_url:
             try:
@@ -68,17 +86,22 @@ def process(session, account, log):
                         headers["X-XSRF-TOKEN"] = unquote(v)
 
                 log("❤️ 发送心跳请求...", "INFO", server_id)
-                # Altare.sh 强制要求使用 POST 才能拿积分
                 if "altare.sh" in heartbeat_url:
                     resp = session.post(heartbeat_url, headers=headers, timeout=15, verify=False)
                 else:
-                    # 其他普通的挂机网址默认用 GET
                     resp = session.get(heartbeat_url, headers=headers, timeout=15, verify=False)
                 
                 if resp.status_code == 200:
                     log(f"✅ 心跳成功 (200)", "INFO", server_id)
                 elif resp.status_code in [401, 403]:
-                    log(f"❌ 权限被拦截 ({resp.status_code}): 请检查 Token 是否过期或 IP 被标记", "ERROR", server_id)
+                    log(f"⚠️ 鉴权异常 ({resp.status_code})，尝试紧急重新入场...", "WARNING", server_id)
+                    # 遇到 401/403 尝试紧急 Join 一次
+                    join_url = heartbeat_url.replace("/heartbeat", "/join")
+                    try:
+                        session.post(join_url, headers=headers, timeout=10, verify=False)
+                    except:
+                        pass
+                    log(f"❌ 权限仍被拦截: 请检查 Token 是否过期或 IP 被标记", "ERROR", server_id)
                 else:
                     log(f"⚠️ 心跳异常 ({resp.status_code})", "WARNING", server_id)
             except Exception as e:

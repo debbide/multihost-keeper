@@ -45,6 +45,7 @@ def process(session, account, log):
     if heartbeat_url and "altare.sh" in heartbeat_url:
         headers["Origin"] = "https://altare.sh"
         headers["Referer"] = "https://altare.sh/billing/rewards/afk"
+        headers["Sec-Fetch-Site"] = "same-origin" # 修正为抓包中的值
 
     try:
         wait_seconds = int(wait_seconds)

@@ -19,7 +19,7 @@ services:
       - .:/app/data
     environment:
       - TZ=Asia/Shanghai
-      - SECRET_KEY=change-this-to-random-string
+      # Optional: set to 0.0.0.0 if you need external access to proxy ports
       - PROXY_LISTEN=0.0.0.0
 
 networks:

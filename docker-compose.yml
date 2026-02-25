@@ -12,7 +12,7 @@ services:
       - .:/app/data
     environment:
       - TZ=Asia/Shanghai
-      - SECRET_KEY=change-this-to-random-string
+      # 可选：如需容器外访问代理端口，设置为 0.0.0.0
       - PROXY_LISTEN=0.0.0.0
 
 networks:

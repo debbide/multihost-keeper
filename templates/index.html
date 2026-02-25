@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LemeBot - 账号管理</title>
+    <title>MultiHost Keeper - Account Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* 暗色模式（默认） */
@@ -234,7 +234,7 @@
         <!-- Header -->
         <header class="glass sticky top-0 z-40 shadow-lg">
             <div class="max-w-full mx-auto px-4 py-3 flex items-center justify-between">
-                <h1 class="text-lg font-bold text-theme">LemeBot</h1>
+                <h1 class="text-lg font-bold text-theme">MultiHost Keeper</h1>
                 <div class="flex items-center gap-3">
                     <!-- 主题切换 -->
                     <div class="theme-toggle" @click="toggleTheme" :title="isDark ? '切换到亮色模式' : '切换到暗色模式'"></div>
@@ -546,7 +546,6 @@
                             <label class="block text-sm text-theme-secondary mb-1">平台</label>
                             <select v-model="formData.platform"
                                 class="w-full px-3 py-2 glass-input rounded-lg text-theme text-sm focus:outline-none">
-                                <option value="lemehost">LemeHost</option>
                                 <option value="freexcraft">FreeXCraft</option>
                                 <option value="minestrator">Minestrator</option>
                                 <option value="keepalive">KeepAlive</option>
@@ -759,7 +758,7 @@
                     original_server_id: '',
                     cookie: '',
                     proxy_node_id: '',
-                    platform: 'lemehost',
+                    platform: 'freexcraft',
                     minestrator_api_key: '',
                     minestrator_api_url: '',
                     minestrator_user_agent: '',
@@ -1141,7 +1140,7 @@
                     formData.original_server_id = account.server_id
                     formData.cookie = account.cookie || ''
                     formData.proxy_node_id = account.proxy_node_id || ''
-                    formData.platform = account.platform || 'lemehost'
+                    formData.platform = account.platform || 'freexcraft'
                     formData.minestrator_api_key = ''
                     formData.minestrator_api_url = account.minestrator_api_url || ''
                     formData.minestrator_user_agent = account.minestrator_user_agent || ''
@@ -1206,7 +1205,7 @@
                     formData.original_server_id = ''
                     formData.cookie = ''
                     formData.proxy_node_id = ''
-                    formData.platform = 'lemehost'
+                    formData.platform = 'freexcraft'
                     formData.minestrator_api_key = ''
                     formData.minestrator_api_url = ''
                     formData.minestrator_user_agent = ''

@@ -48,7 +48,6 @@ COPY platforms/ platforms/
 COPY proxy/ proxy/
 COPY templates/ templates/
 COPY anik_renew.py .
-COPY leme_power.py .
 COPY freexcraft_renew.py .
 
 # 创建数据目录挂载点

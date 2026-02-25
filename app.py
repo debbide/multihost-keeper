@@ -285,11 +285,7 @@ def get_accounts():
         server_id = acc.get("server_id", "")
         platform = (acc.get("platform") or "").strip().lower()
         if not platform:
-            platform = (
-                "freexcraft"
-                if re.match(r"^[0-9a-fA-F-]{36}$", str(server_id))
-                else "lemehost"
-            )
+            platform = "freexcraft"
         state = states.get(server_id, {})
         result_acc = {
             "name": acc.get("name", ""),

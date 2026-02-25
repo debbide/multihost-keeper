@@ -1,5 +1,5 @@
 {
-  "name": "leme-bot-proxy",
+  "name": "multihost-keeper",
   "private": true,
   "type": "module",
   "dependencies": {

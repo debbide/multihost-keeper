@@ -1,12 +1,12 @@
 services:
-  leme-bot:
-    image: ghcr.io/debbide/leme-pro:latest
-    container_name: leme-bot
+  multihost-keeper:
+    image: ghcr.io/debbide/multihost-keeper:latest
+    container_name: multihost-keeper
     restart: unless-stopped
     ports:
       - "5000:5000"
     networks:
-      - leme-net
+      - multihost-keeper-net
     volumes:
       # 只需这一行：将本地当前目录映射到容器的数据中心
       - .:/app/data
@@ -16,5 +16,5 @@ services:
       - PROXY_LISTEN=0.0.0.0
 
 networks:
-  leme-net:
+  multihost-keeper-net:
     driver: bridge

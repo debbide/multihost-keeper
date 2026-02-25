@@ -22,7 +22,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # ==================== 配置 ====================
 DATA_DIR = os.environ.get("DATA_DIR", "/app/data")
 CONFIG_FILE = os.environ.get("CONFIG_FILE", os.path.join(DATA_DIR, "config.json"))
-LOG_FILE = os.environ.get("LOG_FILE", os.path.join(DATA_DIR, "lemehost.log"))
+LOG_FILE = os.environ.get("LOG_FILE", os.path.join(DATA_DIR, "app.log"))
 STATE_FILE = os.environ.get("STATE_FILE", os.path.join(DATA_DIR, "state.json"))
 PROXY_NODES_FILE = os.environ.get(
     "PROXY_NODES_FILE", os.path.join(DATA_DIR, "proxy_nodes.json")
@@ -54,8 +54,8 @@ def get_platform_module(account):
         pkg = "platforms.freexcraft"
         domain = "freexcraft.com"
     else:
-        pkg = "platforms.lemehost"
-        domain = "lemehost.com"
+        print(f"未知平台: {platform or '未指定'}")
+        return None, None
 
     try:
         module = importlib.import_module(pkg)
